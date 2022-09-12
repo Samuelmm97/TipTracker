@@ -28,7 +28,7 @@ app.post("/login", async (req, res) => {
   const body: AuthRequestBody = req.body;
 
   let result = await utils.login(body);
-  if (!result || result !== "SELECT 1") {
+  if (!result) {
     res.sendStatus(400);
     return;
   }

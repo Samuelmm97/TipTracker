@@ -1,7 +1,8 @@
 import { Client, Query } from "ts-postgres";
 import { AuthRequestBody } from "../models/models";
+import bcrypt from "bcrypt";
 
-console.log(process.env.POSTGRES_USER);
+const saltRounds = 10;
 
 const client = new Client({
   user: process.env.POSTGRES_USER,
@@ -22,31 +23,48 @@ export const utils = {
   },
   registerUser: async (user: AuthRequestBody) => {
     try {
-      const result = await client.query(
-        `INSERT INTO accounts (email, password, created_on, last_login)
-         VALUES ($1, $2, current_timestamp, current_timestamp)`,
-        [user.email, user.password]
-      );
+      bcrypt.hash(user.password, saltRounds, async (err, hash: string) => {
+        if (err) {
+          console.log(err);
+          return err;
+        }
 
-      console.log(result);
+        const result = await client.query(
+          `INSERT INTO accounts (email, password, created_on, last_login)
+          VALUES ($1, $2, current_timestamp, current_timestamp)`,
+          [user.email, hash]
+        );
+
+        console.log(result);
+      });
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
+      return e;
     }
   },
   login: async (user: AuthRequestBody) => {
     try {
       const result = await client.query(
-        `SELECT email FROM accounts
-         WHERE email = $1
-         AND password = $2`,
-        [user.email, user.password]
+        `SELECT password FROM accounts
+         WHERE email = $1`,
+        [user.email]
       );
 
       console.log(result);
-      return result.status;
+      if (result.status === "SELECT 0") {
+        return false;
+      }
+      let password = "" + result.rows[0][0];
+      let isValid = await new Promise((res, rej) => {
+        bcrypt.compare(user.password, password, (err, result) => {
+          res(result);
+        });
+      });
+
+      return isValid;
     } catch (e) {
       console.log("Error getting user during login postgres", e);
-      return e;
+      return false;
     }
   },
 };
