@@ -1,33 +1,24 @@
 import { Client, Query } from "ts-postgres";
 import { AuthRequestBody } from "../models/models";
 
+console.log(process.env.POSTGRES_USER);
+
 const client = new Client({
-  user: "tipappadmin",
-  host: "tipappserver.postgres.database.azure.com",
+  user: process.env.POSTGRES_USER,
+  host: process.env.POSTGRES_HOST,
   database: "tippal",
-  password: "VFEe3Au5KUKznL6",
+  password: process.env.POSTGRES_PASSWORD,
   port: 5432,
 });
 
 export const utils = {
   connectDB: async () => {
-    return client.connect();
+    await client.connect();
+    return "connected";
   },
   disconnect: async () => {
     await client.end();
     return "ended";
-  },
-  testClient: async () => {
-    try {
-      const result = client.query("SELECT * from person");
-
-      for await (const row of result) {
-        // 'Hello world!'
-        console.log("test", row.data);
-      }
-    } finally {
-      await client.end();
-    }
   },
   registerUser: async (user: AuthRequestBody) => {
     try {
@@ -40,8 +31,6 @@ export const utils = {
       console.log(result);
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
-    } finally {
-      if (!client.closed) await client.end();
     }
   },
   login: async (user: AuthRequestBody) => {
@@ -58,8 +47,6 @@ export const utils = {
     } catch (e) {
       console.log("Error getting user during login postgres", e);
       return e;
-    } finally {
-      if (!client.closed) await client.end();
     }
   },
 };

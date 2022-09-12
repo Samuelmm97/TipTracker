@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+console.log(process.env.POSTGRES_USER);
 import express from "express";
 import { AuthRequestBody } from "./models/models";
 import { utils } from "./utils/postgres";
@@ -6,10 +9,9 @@ import bodyParser from "body-parser";
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-const port = 3002;
+const port = 2994;
 
 app.get("/", (req, res) => {
-  utils.testClient();
   res.send("Hello World!");
 });
 
@@ -33,8 +35,8 @@ app.post("/login", async (req, res) => {
   res.sendStatus(200);
 });
 
-app.listen(port, () => {
-  utils.connectDB();
+app.listen(port, async () => {
+  await utils.connectDB();
   return console.log(`Express is listening at http://localhost:${port}`);
 });
 
@@ -51,7 +53,7 @@ const runBeforeExiting = (fun: Function) => {
   for (const signal of exitSignals) {
     process.on(signal as any, async () => {
       // eslint-disable-line @typescript-eslint/no-explicit-any
-      if (!wasCleanedUp) {
+      if (!wasCleanedUp && signal !== "exit") {
         await fun();
         wasCleanedUp = true;
       }
@@ -60,8 +62,8 @@ const runBeforeExiting = (fun: Function) => {
   }
 };
 
-runBeforeExiting(async () => {
-  console.log("server closing...");
-  await utils.disconnect();
-    return null;
-});
+// runBeforeExiting(async () => {
+//   console.log("server closing...");
+//   await utils.disconnect();
+//   return null;
+// });
