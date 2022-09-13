@@ -18,16 +18,58 @@ class _LoginPageState extends State<LoginPage> {
             //LOGO
             SizedBox(height: 149),
             Text(
-              'Replace me with logo',
+              'TIPMATE',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 32,
+                  fontSize: 64,
                   color: Color(0xffEFD6AC)),
-            ),
+            ), //Text
 
             //Sign in Button
+            SizedBox(
+              height: 128,
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 25.0),
+              child: Container(
+                padding: EdgeInsets.fromLTRB(16, 12, 12, 16),
+                decoration: BoxDecoration(
+                    border: Border.all(color: Color(0xff0BFF4F)),
+                    borderRadius: BorderRadius.circular(16)),
+                child: Center(
+                  child: Text(
+                    'Sign In',
+                    style: TextStyle(
+                        color: Color(0xff0BFF4F),
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
 
             //Log in Button
+            SizedBox(
+              height: 32,
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 25.0),
+              child: Container(
+                padding: EdgeInsets.fromLTRB(16, 12, 12, 16),
+                decoration: BoxDecoration(
+                    border: Border.all(color: Color(0xff0BFF4F)),
+                    borderRadius: BorderRadius.circular(16)),
+                child: Center(
+                  child: Text(
+                    'Create Account',
+                    style: TextStyle(
+                        color: Color(0xff0BFF4F),
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            )
           ]),
         ),
       ),
