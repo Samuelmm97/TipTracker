@@ -35,7 +35,6 @@ export const utils = {
           [user.email, hash]
         );
 
-        console.log(result);
       });
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
@@ -50,7 +49,6 @@ export const utils = {
         [user.email]
       );
 
-      console.log(result);
       if (result.status === "SELECT 0") {
         return false;
       }
