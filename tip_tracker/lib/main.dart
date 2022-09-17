@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'core/auth/login/login_screen.dart';
+import 'core/auth/login/LobbyPage.dart';
 
 void main() {
   runApp(const MyApp());

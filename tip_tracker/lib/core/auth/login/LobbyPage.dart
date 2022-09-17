@@ -51,9 +51,9 @@ class _LobbyPageState extends State<LobbyPage> {
                     child: Text(
                       'Sign In',
                       style: TextStyle(
-                          color: Color(0xff0BFF4F),
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold),
+                        color: Color(0xff0BFF4F),
+                        fontSize: 32,
+                      ),
                     ),
                   ),
                 ),
@@ -84,9 +84,9 @@ class _LobbyPageState extends State<LobbyPage> {
                     child: Text(
                       'Create Account',
                       style: TextStyle(
-                          color: Color(0xff0BFF4F),
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold),
+                        color: Color(0xff0BFF4F),
+                        fontSize: 32,
+                      ),
                     ),
                   ),
                 ),
