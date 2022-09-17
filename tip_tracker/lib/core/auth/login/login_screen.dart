@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:tip_tracker/core/auth/login/Log_in_form.dart';
+import 'package:tip_tracker/core/auth/login/Sign_up_form.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+class LobbyPage extends StatefulWidget {
+  const LobbyPage({Key? key}) : super(key: key);
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LobbyPage> createState() => _LobbyPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LobbyPageState extends State<LobbyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,43 +31,63 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(
               height: 128,
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 25.0),
-              child: Container(
-                padding: EdgeInsets.fromLTRB(16, 12, 12, 16),
-                decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xff0BFF4F)),
-                    borderRadius: BorderRadius.circular(16)),
-                child: Center(
-                  child: Text(
-                    'Sign In',
-                    style: TextStyle(
-                        color: Color(0xff0BFF4F),
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold),
+            GestureDetector(
+              //Handle Gesture
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Log_in_form()),
+                );
+              },
+
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 25.0),
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(16, 12, 12, 16),
+                  decoration: BoxDecoration(
+                      border: Border.all(color: Color(0xff0BFF4F)),
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Center(
+                    child: Text(
+                      'Sign In',
+                      style: TextStyle(
+                          color: Color(0xff0BFF4F),
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
             ),
 
-            //Log in Button
+            //Sign UP button
             SizedBox(
               height: 32,
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 25.0),
-              child: Container(
-                padding: EdgeInsets.fromLTRB(16, 12, 12, 16),
-                decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xff0BFF4F)),
-                    borderRadius: BorderRadius.circular(16)),
-                child: Center(
-                  child: Text(
-                    'Create Account',
-                    style: TextStyle(
-                        color: Color(0xff0BFF4F),
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold),
+            GestureDetector(
+              //Handle Gesture
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Sign_up_form()),
+                );
+              },
+
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 25.0),
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(16, 12, 12, 16),
+                  decoration: BoxDecoration(
+                      border: Border.all(color: Color(0xff0BFF4F)),
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Center(
+                    child: Text(
+                      'Create Account',
+                      style: TextStyle(
+                          color: Color(0xff0BFF4F),
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),

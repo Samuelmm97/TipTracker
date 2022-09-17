@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Tips App',
-      home: LoginPage(),
+      home: LobbyPage(),
     );
   }
 }
