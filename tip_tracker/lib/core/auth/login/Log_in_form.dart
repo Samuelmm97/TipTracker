@@ -8,39 +8,51 @@ class Log_in_form extends StatefulWidget {
 }
 
 class _Log_in_formState extends State<Log_in_form> {
+  final _emailFieldController = TextEditingController();
+  final _passwordFieldController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff183A37),
+
+      //  Appbar for back button
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0.0,
+      ),
+
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             child: Column(
               children: [
                 //  Welcome message
-                Text(
+                const Text(
                   'Welcome Back',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 48,
                       color: Color(0xffEFD6AC)),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 64,
                 ),
 
                 //  Email text field
                 Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 32),
                     child: Container(
                       decoration: BoxDecoration(
-                          color: Color(0xff04151F),
+                          color: const Color(0xff04151F),
                           borderRadius: BorderRadius.circular(16)),
                       child: Padding(
-                        padding: EdgeInsets.only(left: 20.0),
+                        padding: const EdgeInsets.only(left: 20.0),
                         child: TextField(
-                          style: TextStyle(color: Color(0xff3F3B3B)),
-                          decoration: InputDecoration(
+                          controller: _emailFieldController,
+                          style: const TextStyle(color: Color(0xff3F3B3B)),
+                          decoration: const InputDecoration(
                             border: InputBorder.none,
                             hintText: 'Email',
                             hintStyle: TextStyle(color: Color(0xff3F3B3B)),
@@ -51,17 +63,18 @@ class _Log_in_formState extends State<Log_in_form> {
 
                 //  Password text field
                 Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
                       decoration: BoxDecoration(
-                          color: Color(0xff04151F),
+                          color: const Color(0xff04151F),
                           borderRadius: BorderRadius.circular(16)),
                       child: Padding(
-                        padding: EdgeInsets.only(left: 20.0),
+                        padding: const EdgeInsets.only(left: 20.0),
                         child: TextField(
+                          controller: _passwordFieldController,
                           obscureText: true,
-                          style: TextStyle(color: Color(0xff3F3B3B)),
-                          decoration: InputDecoration(
+                          style: const TextStyle(color: Color(0xff3F3B3B)),
+                          decoration: const InputDecoration(
                             border: InputBorder.none,
                             hintText: 'Password',
                             hintStyle: TextStyle(color: Color(0xff3F3B3B)),
@@ -72,23 +85,32 @@ class _Log_in_formState extends State<Log_in_form> {
 
                 //  Sign in button
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 64, vertical: 32),
-                  child: Container(
-                    padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Color(0xff0BFF4F)),
-                        borderRadius: BorderRadius.circular(16)),
-                    child: Center(
-                      child: Text(
-                        'Sign In',
-                        style: TextStyle(
-                          color: Color(0xff0BFF4F),
-                          fontSize: 24,
+                  padding: const EdgeInsets.fromLTRB(64, 32, 64, 16),
+                  child: GestureDetector(
+                    //On tap await authorization method?
+
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xff0BFF4F)),
+                          borderRadius: BorderRadius.circular(16)),
+                      child: const Center(
+                        child: Text(
+                          'Sign In',
+                          style: TextStyle(
+                            color: Color(0xff0BFF4F),
+                            fontSize: 24,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
+
+                const Text(
+                  'Forgot Password',
+                  style: TextStyle(color: Color(0xff0BFF4F)),
+                )
               ],
             ),
           ),

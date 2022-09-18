@@ -18,8 +18,8 @@ class _LobbyPageState extends State<LobbyPage> {
         child: Center(
           child: Column(children: [
             //LOGO
-            SizedBox(height: 149),
-            Text(
+            const SizedBox(height: 149),
+            const Text(
               'TIPMATE',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -28,7 +28,7 @@ class _LobbyPageState extends State<LobbyPage> {
             ), //Text
 
             //Sign in Button
-            SizedBox(
+            const SizedBox(
               height: 128,
             ),
             GestureDetector(
@@ -41,13 +41,13 @@ class _LobbyPageState extends State<LobbyPage> {
               },
 
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 25.0),
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Container(
-                  padding: EdgeInsets.fromLTRB(16, 12, 12, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 12, 16),
                   decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xff0BFF4F)),
+                      border: Border.all(color: const Color(0xff0BFF4F)),
                       borderRadius: BorderRadius.circular(16)),
-                  child: Center(
+                  child: const Center(
                     child: Text(
                       'Sign In',
                       style: TextStyle(
@@ -61,7 +61,7 @@ class _LobbyPageState extends State<LobbyPage> {
             ),
 
             //Sign UP button
-            SizedBox(
+            const SizedBox(
               height: 32,
             ),
             GestureDetector(
@@ -74,13 +74,13 @@ class _LobbyPageState extends State<LobbyPage> {
               },
 
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 25.0),
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Container(
-                  padding: EdgeInsets.fromLTRB(16, 12, 12, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 12, 16),
                   decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xff0BFF4F)),
+                      border: Border.all(color: const Color(0xff0BFF4F)),
                       borderRadius: BorderRadius.circular(16)),
-                  child: Center(
+                  child: const Center(
                     child: Text(
                       'Create Account',
                       style: TextStyle(
@@ -91,7 +91,7 @@ class _LobbyPageState extends State<LobbyPage> {
                   ),
                 ),
               ),
-            )
+            ),
           ]),
         ),
       ),
