@@ -31,9 +31,9 @@ app.post("/login", async (req, res) => {
 
 app.post("/tip", async(req, res) => {
   const body: AuthRequestBody = req.body;
-  const amount: number = +req.params;
+  const params : any = req.query;
 
-  let result = await utils.addTip(body, amount);
+  let result = await utils.addTip(body, params.amount);
   if (!result) {
     res.sendStatus(400);
     return;
