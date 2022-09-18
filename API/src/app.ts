@@ -4,18 +4,26 @@ import express from "express";
 import { AuthRequestBody } from "./models/models";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
+import * as jwt from "jsonwebtoken";
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const port = 3000;
+const JWT_SECRET: string = process.env.JWT_SECRET ?? "";
+if (JWT_SECRET === "") {
+  console.log("JWT_SECRET REQUIRED");
+  process.exit(0);
+}
 
 app.post("/register", async (req, res) => {
   const body: AuthRequestBody = req.body;
 
   await utils.registerUser(body);
 
-  res.status(200).send({ success: true });
+  let token = jwt.sign({ user: body }, JWT_SECRET);
+
+  res.status(200).send(token);
 });
 
 app.post("/login", async (req, res) => {
@@ -26,7 +34,8 @@ app.post("/login", async (req, res) => {
     res.sendStatus(400);
     return;
   }
-  res.sendStatus(200);
+  let token = jwt.sign({ user: body }, JWT_SECRET);
+  res.send(token);
 });
 
 app.listen(port, async () => {

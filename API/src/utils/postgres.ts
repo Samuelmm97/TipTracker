@@ -4,11 +4,20 @@ import bcrypt from "bcrypt";
 
 const saltRounds = 10;
 
+const POSTGRES_USER = process.env.POSTGRES_USER;
+const POSTGRES_HOST = process.env.POSTGRES_HOST;
+const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD;
+
+if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
+  console.log("MISSING POSTGRES CREDENTIALS");
+  process.exit(0);
+}
+
 const client = new Client({
-  user: process.env.POSTGRES_USER,
-  host: process.env.POSTGRES_HOST,
+  user: POSTGRES_USER,
+  host: POSTGRES_HOST,
   database: "tippal",
-  password: process.env.POSTGRES_PASSWORD,
+  password: POSTGRES_PASSWORD,
   port: 5432,
 });
 
@@ -34,7 +43,6 @@ export const utils = {
           VALUES ($1, $2, current_timestamp, current_timestamp)`,
           [user.email, hash]
         );
-
       });
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
