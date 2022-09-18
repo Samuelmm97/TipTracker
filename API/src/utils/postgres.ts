@@ -83,7 +83,8 @@ export const utils = {
       // TODO: add time field to table 
       const tipResult = await client.query(
         `INSERT INTO transactions (tip_amount, driver_id)
-        values ('$${amount}', ${id})`
+        values ('\$$1', $2)`,
+        [amount, id]
       );
 
       return true;
