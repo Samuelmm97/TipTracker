@@ -4,6 +4,7 @@ import express from "express";
 import { AuthRequestBody } from "./models/models";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
+var format = require('date-fns/format')
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -33,12 +34,35 @@ app.post("/tip", async(req, res) => {
   const body: AuthRequestBody = req.body;
   const params : any = req.query;
 
-  let result = await utils.addTip(body, params.amount);
+  let d: Date = new Date();
+  let time : string = format(d, 'yyyy-MM-dd');
+
+  let result = await utils.addTip(body, params.amount, time);
   if (!result) {
     res.sendStatus(400);
     return;
   }
   res.sendStatus(200);
+});
+
+app.get("/history", async(req, res) => {
+  const body: AuthRequestBody = req.body;
+  const params: any = req.query;
+
+  let period: number = +params.period;
+  let d: Date = new Date();
+  d.setDate(d.getDate() - period);
+  let time : string = format(d, 'yyy-MM-dd');
+
+  let result = await utils.getTips(body, time);
+  console.log(result);
+
+  if (!result) {
+    res.sendStatus(400);
+    return;
+  }
+
+  return res.jsonp({ names: result.names });
 });
 
 app.listen(port, async () => {

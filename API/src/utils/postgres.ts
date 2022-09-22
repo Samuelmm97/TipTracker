@@ -67,7 +67,7 @@ export const utils = {
     }
   },
   // Assumes currency is dollars (temporary)
-  addTip: async (user: AuthRequestBody, amount: string) => {
+  addTip: async (user: AuthRequestBody, amount: string, time: string) => {
     try {
       const idResult = await client.query(
         `SELECT user_id FROM accounts
@@ -80,17 +80,54 @@ export const utils = {
       }
       let id : number = +("" + idResult.rows[0][0]);
 
+      console.log(time)
       // TODO: add time field to table 
       const tipResult = await client.query(
-        `INSERT INTO transactions (tip_amount, driver_id)
-        values ($1::float8::numeric::money, $2)`,
-        [amount, id]
+        `INSERT INTO transactions (tip_amount, user_id, tip_date) 
+        VALUES ($1::FLOAT8::NUMERIC::MONEY, $2, TO_DATE($3, 'YYYY-MM-DD'))`,
+        [amount, id, time]
       );
 
       return true;
     } catch(e) {
       console.log("Error adding tip to database", e);
       return false;
+    }
+  },
+
+  getTips: async(user: AuthRequestBody, time: string) => {
+    try {
+      const idResult = await client.query(
+        `SELECT user_id FROM accounts
+        WHERE email = $1`,
+        [user.email]
+      );
+
+      console.log(user);
+      if (idResult.status === "SELECT 0") {
+        return null;
+      }
+      let id : number = +("" + idResult.rows[0][0]);
+
+      const histResult = await client.query(
+          `SELECT * FROM transactions
+          WHERE user_id = $1 AND tip_date > TO_DATE($2, 'YYYY-MM-DD')`, 
+          [id, time]
+      );
+
+      if (histResult.status === "SELECT 0") {
+        return null;
+      }
+
+      //let history: any = {};
+      // TODO: add formatted data
+
+
+      return histResult;
+
+    } catch(e) {
+      console.log("Error adding tip to database", e);
+      return null;
     }
   },
 };
