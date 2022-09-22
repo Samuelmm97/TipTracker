@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:tip_tracker/core/auth/login/Log_in_form.dart';
-import 'package:tip_tracker/core/auth/login/Sign_up_form.dart';
+import 'package:tip_tracker/core/auth/login/login_screen.dart';
+import 'package:tip_tracker/core/auth/registration/registration_screen.dart';
 
-class LobbyPage extends StatefulWidget {
-  const LobbyPage({Key? key}) : super(key: key);
+class AuthIndexScreen extends StatefulWidget {
+  const AuthIndexScreen({Key? key}) : super(key: key);
 
   @override
-  State<LobbyPage> createState() => _LobbyPageState();
+  State<AuthIndexScreen> createState() => _AuthIndexScreenState();
 }
 
-class _LobbyPageState extends State<LobbyPage> {
+class _AuthIndexScreenState extends State<AuthIndexScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,7 +36,7 @@ class _LobbyPageState extends State<LobbyPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Log_in_form()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
               },
 
@@ -69,7 +69,8 @@ class _LobbyPageState extends State<LobbyPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Sign_up_form()),
+                  MaterialPageRoute(
+                      builder: (context) => const RegistrationScreen()),
                 );
               },
 

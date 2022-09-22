@@ -1,22 +1,27 @@
 class UserModel {
   int id;
-  String name;
-  String phone;
-  LocationModel location;
+  String email;
+  // String name;
+  // String phone;
+  // LocationModel location;
   
-  UserModel(this.id, this.name, this.phone, this.location);
+  UserModel(this.id, this.email,
+  // this.name, this.phone, this.location,
+  );
 
   UserModel.fromJson(dynamic json):
     id = json["id"],
-    name = json["name"],
-    phone = json["phone"],
-    location = LocationModel.fromJson(json["location"]);
+    email = json["email"];
+    // name = json["name"],
+    // phone = json["phone"],
+    // location = LocationModel.fromJson(json["location"]);
 
   Map<String, dynamic> toJson() => {
     "id": id,
-    "name": name,
-    "phone": phone,
-    "location": location.toJson(),
+    "email": email,
+    // "name": name,
+    // "phone": phone,
+    // "location": location.toJson(),
   };
 
 }

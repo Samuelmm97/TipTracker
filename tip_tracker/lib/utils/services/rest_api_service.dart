@@ -55,7 +55,20 @@ class RestApiService {
     );
   }
 
-  static Future<dynamic> login() async {
-    return await _get("$apiPath/api/validate_token");
+  static Future<dynamic> login(String email, String password) async {
+    Map<String, String> body = {
+      "email": email,
+      "password": password,
+    };
+    return await _post("$apiPath/api/login", body);
+  }
+
+  static Future<dynamic> registerUser(
+      String email, String password, String confirmPassword) async {
+    Map<String, String> body = {
+      "email": email,
+      "password": password,
+    };
+    return await _post("$apiPath/api/register", body);
   }
 }

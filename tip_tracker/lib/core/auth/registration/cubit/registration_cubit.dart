@@ -1,48 +1,45 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tip_tracker/core/auth/login/cubit/login_repository.dart';
+import 'package:tip_tracker/core/auth/registration/cubit/registration_repository.dart';
 import 'package:tip_tracker/utils/helpers/logger_helper.dart';
 import 'package:tip_tracker/utils/helpers/response_helper.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
-part 'login_state.dart';
+part 'registration_state.dart';
 
-class LoginCubit extends Cubit<LoginState> {
-  LoginCubit() : super(LoginInitial());
+class RegistrationCubit extends Cubit<RegistrationState> {
+  RegistrationCubit() : super(RegistrationInitial());
 
   String email = "";
   String password = "";
+  String confirmPassword = "";
   String errorMessage = "";
 
-  LoginRepository loginRepository = LoginRepository();
+  RegistrationRepository registrationRepository = RegistrationRepository();
   SecureStorageService storage = SecureStorageService();
 
-  Future<bool> login() async {
+  Future<bool> registerUser() async {
     try {
-      emit(LoginAuthenticating());
-      dynamic response = await loginRepository.login(email, password);
+      emit(Registering());
+      dynamic response = await registrationRepository.registerUser(
+          email, password, confirmPassword);
 
       // Authentication successful
-      if (response is String) {
-        // Store JWT
-        // await storage.addNewItem(email, "jwt", response);
-        await storage.addNewItem(email, "email", email);
-        emit(LoginAuthenticated());
+      if (response == true) {
+        emit(Registered());
         email = "";
         password = "";
+        confirmPassword = "";
         errorMessage = "";
         return true;
       } else {
         errorMessage = ResponseHelper.errorMessage(response);
-        emit(LoginError(errorMessage));
+        emit(RegistrationError(errorMessage));
         if (kDebugMode) {
           logger.w("$errorMessage: Status code: $response");
         }
       }
     } catch (e) {
-      if (kDebugMode) {
-        logger.e(e.toString());
-      }
-      emit(LoginError("Connection to server timed out"));
+      emit(RegistrationError(e.toString()));
     }
     return false;
   }

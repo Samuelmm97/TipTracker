@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 
-class Sign_up_form extends StatefulWidget {
-  const Sign_up_form({Key? key}) : super(key: key);
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
-  State<Sign_up_form> createState() => _Sign_up_formState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _Sign_up_formState extends State<Sign_up_form> {
+class _LoginScreenState extends State<LoginScreen> {
   final _emailFieldController = TextEditingController();
   final _passwordFieldController = TextEditingController();
-  final _rePasswordFieldController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +21,7 @@ class _Sign_up_formState extends State<Sign_up_form> {
         backgroundColor: Colors.transparent,
         elevation: 0.0,
       ),
+
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -29,17 +29,11 @@ class _Sign_up_formState extends State<Sign_up_form> {
               children: [
                 //  Welcome message
                 const Text(
-                  'Join Us',
+                  'Welcome Back',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 48,
                       color: Color(0xffEFD6AC)),
-                ),
-
-                //Sub Text
-                const Text(
-                  'Add Subtext Here',
-                  style: TextStyle(fontSize: 16, color: Color(0xffEFD6AC)),
                 ),
                 const SizedBox(
                   height: 64,
@@ -47,7 +41,8 @@ class _Sign_up_formState extends State<Sign_up_form> {
 
                 //  Email text field
                 Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 32),
                     child: Container(
                       decoration: BoxDecoration(
                           color: const Color(0xff04151F),
@@ -68,8 +63,7 @@ class _Sign_up_formState extends State<Sign_up_form> {
 
                 //  Password text field
                 Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
                       decoration: BoxDecoration(
                           color: const Color(0xff04151F),
@@ -89,33 +83,11 @@ class _Sign_up_formState extends State<Sign_up_form> {
                       ),
                     )),
 
-                //  Re Enter Password Field
-                Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: const Color(0xff04151F),
-                          borderRadius: BorderRadius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 20.0),
-                        child: TextField(
-                          controller: _rePasswordFieldController,
-                          obscureText: true,
-                          style: const TextStyle(color: Color(0xff3F3B3B)),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Re-enter Password',
-                            hintStyle: TextStyle(color: Color(0xff3F3B3B)),
-                          ),
-                        ),
-                      ),
-                    )),
-
                 //  Sign in button
                 Padding(
                   padding: const EdgeInsets.fromLTRB(64, 32, 64, 16),
                   child: GestureDetector(
-                    //On tap await user creation method?
+                    //On tap await authorization method?
 
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -124,7 +96,7 @@ class _Sign_up_formState extends State<Sign_up_form> {
                           borderRadius: BorderRadius.circular(16)),
                       child: const Center(
                         child: Text(
-                          'Sign Up',
+                          'Sign In',
                           style: TextStyle(
                             color: Color(0xff0BFF4F),
                             fontSize: 24,
@@ -134,6 +106,11 @@ class _Sign_up_formState extends State<Sign_up_form> {
                     ),
                   ),
                 ),
+
+                const Text(
+                  'Forgot Password',
+                  style: TextStyle(color: Color(0xff0BFF4F)),
+                )
               ],
             ),
           ),

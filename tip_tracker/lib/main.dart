@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'core/auth/login/LobbyPage.dart';
+import 'package:tip_tracker/config/routes/routes.dart';
+import 'core/auth/auth_index_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,10 +12,10 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return MaterialApp(
       title: 'Tips App',
-      home: LobbyPage(),
+      routes: Routes.buildRoutes(),
+      initialRoute: Routes.authIndexScreen,
     );
   }
 }
