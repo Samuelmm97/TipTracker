@@ -18,6 +18,10 @@ class SecureStorageService {
     _readAll(accountName);
   }
 
+  Future<String?> readItem(String key) async {
+    return await _storage.read(key: key);
+  }
+
   Future<void> addNewItem(String accountName, String key, String value) async {
     await _storage.write(
       key: key,
