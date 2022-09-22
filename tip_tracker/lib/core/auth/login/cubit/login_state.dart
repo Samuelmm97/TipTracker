@@ -8,14 +8,9 @@ class LoginAuthenticating extends LoginState {}
 
 class LoginAuthenticated extends LoginState {}
 
-class LoggingIn extends LoginState {}
+class LoginConnecting extends LoginState {}
 
-class LoggedIn extends LoginState {
-  LoggedIn(this.user);
-
-  final UserModel user;
-  List<Object> get props => [user];
-}
+class LoggedIn extends LoginState {}
 
 class LoginError extends LoginState {
   LoginError(this.errorMessage);
