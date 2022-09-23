@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tip_tracker/config/routes/routes.dart';
-import 'core/auth/auth_index_screen.dart';
 
 void main() {
   runApp(const MyApp());
