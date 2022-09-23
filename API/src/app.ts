@@ -44,7 +44,7 @@ app.post("/tip", async(req, res) => {
   }
   res.sendStatus(200);
 });
-
+/*
 app.get("/history", async(req, res) => {
   const body: AuthRequestBody = req.body;
   const params: any = req.query;
@@ -62,7 +62,21 @@ app.get("/history", async(req, res) => {
     return;
   }
 
+  // TODO: send stuff
   return res.jsonp({ names: result.names });
+});*/
+
+app.delete("/deletetip", async(req, res) => {
+  const body: AuthRequestBody = req.body;
+  const params: any = req.query;
+  let id: number = +params.id;
+
+  let result = await utils.deleteTip(body, id);
+  if (!result) {
+    res.sendStatus(400);
+    return;
+  }
+  res.sendStatus(200);
 });
 
 app.listen(port, async () => {

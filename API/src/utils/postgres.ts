@@ -94,7 +94,7 @@ export const utils = {
       return false;
     }
   },
-
+  /*
   getTips: async(user: AuthRequestBody, time: string) => {
     try {
       const idResult = await client.query(
@@ -128,6 +128,49 @@ export const utils = {
     } catch(e) {
       console.log("Error adding tip to database", e);
       return null;
+    }
+  },*/
+
+  deleteTip: async(user: AuthRequestBody, id: number) => {
+    try {
+      const usrIdResult = await client.query(
+        `SELECT user_id FROM transactions
+        WHERE id = $1`,
+        [id]
+      );
+
+      if (usrIdResult.status === "SELECT 0") {
+        return false;
+      }
+      let usrId : number = +("" + usrIdResult.rows[0][0]);
+
+      const emailResult = await client.query(
+        `SELECT email FROM accounts
+        WHERE user_id = $1`,
+        [usrId]
+      );
+
+      if (emailResult.status === "SELECT 0") {
+        return false;
+      }
+      let email : string = "" + emailResult.rows[0][0];
+
+      if (email != user.email) {
+        return false;
+      }
+
+      // TODO: delete transaction from table
+      const deleteResult = await client.query(
+        `DELETE FROM transactions
+        WHERE id = $1`,
+        [id]
+      );
+
+      return (deleteResult.status === "DELETE 1");
+
+    } catch(e) {
+      console.log("Error deleting tip from database", e);
+      return false;
     }
   },
 };
