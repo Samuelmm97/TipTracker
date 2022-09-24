@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tip_tracker/modules/index/pages/manual_entry.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class IndexScreen extends StatefulWidget {
   const IndexScreen({Key? key}) : super(key: key);
@@ -12,17 +13,17 @@ class _IndexScreenState extends State<IndexScreen> {
   int currentIndex = 1;
 
   final screens = [
-    const Center(
+    Center(
       child: Text(
         'USER_PAGE_HERE',
-        style: TextStyle(fontSize: 32),
+        style: GoogleFonts.jost(fontSize: 32),
       ),
     ),
     const ManualEntry(),
-    const Center(
+    Center(
       child: Text(
         'Analytics_PAGE_HERE',
-        style: TextStyle(fontSize: 32),
+        style: GoogleFonts.jost(fontSize: 32),
       ),
     ),
   ];
@@ -59,7 +60,7 @@ class _IndexScreenState extends State<IndexScreen> {
             label: 'Custom Entry',
           ),
 
-          //  Index 0, Analytics
+          //  Index 2, Analytics
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart_rounded),
             label: 'Analytics',
