@@ -66,7 +66,7 @@ export const utils = {
       return false;
     }
   },
-  // Assumes currency is dollars (temporary)
+
   addTip: async (user: AuthRequestBody, amount: string, time: string) => {
     try {
       const idResult = await client.query(
@@ -159,7 +159,6 @@ export const utils = {
         return false;
       }
 
-      // TODO: delete transaction from table
       const deleteResult = await client.query(
         `DELETE FROM transactions
         WHERE id = $1`,
@@ -170,6 +169,49 @@ export const utils = {
 
     } catch(e) {
       console.log("Error deleting tip from database", e);
+      return false;
+    }
+  },
+
+  updateTip: async(user: AuthRequestBody, id: number, value: string) => {
+    try {
+      const usrIdResult = await client.query(
+        `SELECT user_id FROM transactions
+        WHERE id = $1`,
+        [id]
+      );
+
+      if (usrIdResult.status === "SELECT 0") {
+        return false;
+      }
+      let usrId : number = +("" + usrIdResult.rows[0][0]);
+
+      const emailResult = await client.query(
+        `SELECT email FROM accounts
+        WHERE user_id = $1`,
+        [usrId]
+      );
+
+      if (emailResult.status === "SELECT 0") {
+        return false;
+      }
+      let email : string = "" + emailResult.rows[0][0];
+
+      if (email != user.email) {
+        return false;
+      }
+
+      const updateResult = await client.query(
+        `UPDATE transactions
+        SET tip_amount = $1::FLOAT8::NUMERIC::MONEY
+        WHERE id = $2`,
+        [value, id]
+      );
+
+      return (updateResult.status === "UPDATE 1");
+
+    } catch(e) {
+      console.log("Error updating tip on database", e);
       return false;
     }
   },

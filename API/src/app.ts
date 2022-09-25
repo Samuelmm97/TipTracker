@@ -66,12 +66,26 @@ app.get("/history", async(req, res) => {
   return res.jsonp({ names: result.names });
 });*/
 
-app.delete("/deletetip", async(req, res) => {
+app.delete("/delete/tip", async(req, res) => {
   const body: AuthRequestBody = req.body;
   const params: any = req.query;
   let id: number = +params.id;
 
   let result = await utils.deleteTip(body, id);
+  if (!result) {
+    res.sendStatus(400);
+    return;
+  }
+  res.sendStatus(200);
+});
+
+app.patch("/update/tip", async(req, res) => {
+  const body: AuthRequestBody = req.body;
+  const params: any = req.query;
+  let id: number = +params.id;
+  let value: string = "" + params.value;
+
+  let result = await utils.updateTip(body, id, value);
   if (!result) {
     res.sendStatus(400);
     return;
