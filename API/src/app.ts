@@ -44,8 +44,8 @@ app.post("/tip", async(req, res) => {
   }
   res.sendStatus(200);
 });
-/*
-app.get("/history", async(req, res) => {
+
+app.get("/get/tips", async(req, res) => {
   const body: AuthRequestBody = req.body;
   const params: any = req.query;
 
@@ -63,8 +63,8 @@ app.get("/history", async(req, res) => {
   }
 
   // TODO: send stuff
-  return res.jsonp({ names: result.names });
-});*/
+  res.send(result);
+});
 
 app.delete("/delete/tip", async(req, res) => {
   const body: AuthRequestBody = req.body;

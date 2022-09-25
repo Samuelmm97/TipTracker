@@ -80,8 +80,6 @@ export const utils = {
       }
       let id : number = +("" + idResult.rows[0][0]);
 
-      console.log(time)
-      // TODO: add time field to table 
       const tipResult = await client.query(
         `INSERT INTO transactions (tip_amount, user_id, tip_date) 
         VALUES ($1::FLOAT8::NUMERIC::MONEY, $2, TO_DATE($3, 'YYYY-MM-DD'))`,
@@ -94,7 +92,7 @@ export const utils = {
       return false;
     }
   },
-  /*
+  
   getTips: async(user: AuthRequestBody, time: string) => {
     try {
       const idResult = await client.query(
@@ -119,17 +117,40 @@ export const utils = {
         return null;
       }
 
-      //let history: any = {};
-      // TODO: add formatted data
+      let ids: number[] = [];
+      let tips: string[] = [];
+      let usr_ids: number[] = [];
+      let dates: string[] = [];
 
+      for (let i = 0; i < histResult.rows.length; ++i) {
+        for (let j = 0; j < histResult.rows[0].length; ++j) {
 
-      return histResult;
+          switch(j) {
+            case 0:
+              ids.push(+(""+histResult.rows[i][j]));
+              break;
+            case 1: 
+              tips.push(""+histResult.rows[i][j]);
+              break;
+            case 2:
+              usr_ids.push(+(""+histResult.rows[i][j]));
+              break;
+            case 3:
+              dates.push(""+histResult.rows[i][j]);
+              break;
+            default:
+          }
+        }
+      }
+
+      let history: any = { "tip_ids": ids, "tips": tips, "usr_ids": usr_ids, "dates":dates };
+      return history;
 
     } catch(e) {
       console.log("Error adding tip to database", e);
       return null;
     }
-  },*/
+  },
 
   deleteTip: async(user: AuthRequestBody, id: number) => {
     try {
