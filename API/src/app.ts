@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import express from "express";
+import { Query } from 'express-serve-static-core';
 import { AuthRequestBody } from "./models/models";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
@@ -23,6 +24,7 @@ app.post("/login", async (req, res) => {
   const body: AuthRequestBody = req.body;
 
   let result = await utils.login(body);
+  
   if (!result) {
     res.sendStatus(400);
     return;
@@ -32,12 +34,11 @@ app.post("/login", async (req, res) => {
 
 app.post("/tip", async(req, res) => {
   const body: AuthRequestBody = req.body;
-  const params : any = req.query;
+  const params: Query = req.query;
+  let amount: string = "" + params.amount;
 
-  let d: Date = new Date();
-  let time : string = format(d, 'yyyy-MM-dd');
+  let result = await utils.addTip(body, amount);
 
-  let result = await utils.addTip(body, params.amount, time);
   if (!result) {
     res.sendStatus(400);
     return;
@@ -45,33 +46,28 @@ app.post("/tip", async(req, res) => {
   res.sendStatus(200);
 });
 
-app.get("/get/tips", async(req, res) => {
+app.get("/tip", async(req, res) => {
   const body: AuthRequestBody = req.body;
-  const params: any = req.query;
+  const params: Query = req.query;
+  let period: number = +(""+params.period);
 
-  let period: number = +params.period;
-  let d: Date = new Date();
-  d.setDate(d.getDate() - period);
-  let time : string = format(d, 'yyy-MM-dd');
-
-  let result = await utils.getTips(body, time);
-  console.log(result);
+  let result = await utils.getTips(body, period);
 
   if (!result) {
     res.sendStatus(400);
     return;
   }
 
-  // TODO: send stuff
   res.send(result);
 });
 
-app.delete("/delete/tip", async(req, res) => {
+app.delete("/tip", async(req, res) => {
   const body: AuthRequestBody = req.body;
-  const params: any = req.query;
-  let id: number = +params.id;
+  const params: Query = req.query;
+  let id: number = +(""+params.id);
 
   let result = await utils.deleteTip(body, id);
+
   if (!result) {
     res.sendStatus(400);
     return;
@@ -79,13 +75,14 @@ app.delete("/delete/tip", async(req, res) => {
   res.sendStatus(200);
 });
 
-app.patch("/update/tip", async(req, res) => {
+app.patch("/tip", async(req, res) => {
   const body: AuthRequestBody = req.body;
-  const params: any = req.query;
-  let id: number = +params.id;
+  const params: Query = req.query;
+  let id: number = +(""+params.id);
   let value: string = "" + params.value;
 
   let result = await utils.updateTip(body, id, value);
+
   if (!result) {
     res.sendStatus(400);
     return;

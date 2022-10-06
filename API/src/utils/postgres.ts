@@ -67,7 +67,7 @@ export const utils = {
     }
   },
 
-  addTip: async (user: AuthRequestBody, amount: string, time: string) => {
+  addTip: async (user: AuthRequestBody, amount: string) => {
     try {
       const idResult = await client.query(
         `SELECT user_id FROM accounts
@@ -82,8 +82,8 @@ export const utils = {
 
       const tipResult = await client.query(
         `INSERT INTO transactions (tip_amount, user_id, tip_date) 
-        VALUES ($1::FLOAT8::NUMERIC::MONEY, $2, TO_DATE($3, 'YYYY-MM-DD'))`,
-        [amount, id, time]
+        VALUES ($1::FLOAT8::NUMERIC::MONEY, $2, current_timestamp)`,
+        [amount, id]
       );
 
       return true;
@@ -93,7 +93,7 @@ export const utils = {
     }
   },
   
-  getTips: async(user: AuthRequestBody, time: string) => {
+  getTips: async(user: AuthRequestBody, period: number) => {
     try {
       const idResult = await client.query(
         `SELECT user_id FROM accounts
@@ -101,7 +101,6 @@ export const utils = {
         [user.email]
       );
 
-      console.log(user);
       if (idResult.status === "SELECT 0") {
         return null;
       }
@@ -109,8 +108,8 @@ export const utils = {
 
       const histResult = await client.query(
           `SELECT * FROM transactions
-          WHERE user_id = $1 AND tip_date > TO_DATE($2, 'YYYY-MM-DD')`, 
-          [id, time]
+          WHERE user_id = $1 AND tip_date > (current_timestamp::DATE - $2::integer)`, 
+          [id, period]
       );
 
       if (histResult.status === "SELECT 0") {
@@ -143,7 +142,7 @@ export const utils = {
         }
       }
 
-      let history: any = { "tip_ids": ids, "tips": tips, "usr_ids": usr_ids, "dates":dates };
+      let history = { "tip_ids": ids, "tips": tips, "usr_ids": usr_ids, "dates":dates };
       return history;
 
     } catch(e) {
