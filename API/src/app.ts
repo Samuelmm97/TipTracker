@@ -1,12 +1,13 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import express from "express";
-import { Query } from 'express-serve-static-core';
+import { Query } from "express-serve-static-core";
 import { AuthRequestBody } from "./models/models";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
 import * as jwt from "jsonwebtoken";
-var format = require('date-fns/format')
+import { verifyJWT } from "./utils/jwt";
+var format = require("date-fns/format");
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -23,7 +24,9 @@ app.post("/register", async (req, res) => {
 
   await utils.registerUser(body);
 
-  let token = jwt.sign({ user: body }, JWT_SECRET);
+  const token = jwt.sign({ email: body.email }, JWT_SECRET, {
+    expiresIn: "15m",
+  });
 
   res.status(200).send(token);
 });
@@ -32,15 +35,18 @@ app.post("/login", async (req, res) => {
   const body: AuthRequestBody = req.body;
 
   let result = await utils.login(body);
-  
+
   if (!result) {
     res.sendStatus(400);
     return;
   }
-  res.sendStatus(200);
+  const token = jwt.sign({ email: body.email }, JWT_SECRET, {
+    expiresIn: "15m",
+  });
+  res.send(token);
 });
 
-app.post("/tip", async(req, res) => {
+app.post("/tip", verifyJWT, async (req, res) => {
   const body: AuthRequestBody = req.body;
   const params: Query = req.query;
   let amount: string = "" + params.amount;
@@ -54,10 +60,10 @@ app.post("/tip", async(req, res) => {
   res.sendStatus(200);
 });
 
-app.get("/tip", async(req, res) => {
+app.get("/tip", async (req, res) => {
   const body: AuthRequestBody = req.body;
   const params: Query = req.query;
-  let period: number = +(""+params.period);
+  let period: number = +("" + params.period);
 
   let result = await utils.getTips(body, period);
 
@@ -69,10 +75,10 @@ app.get("/tip", async(req, res) => {
   res.send(result);
 });
 
-app.delete("/tip", async(req, res) => {
+app.delete("/tip", verifyJWT, async (req, res) => {
   const body: AuthRequestBody = req.body;
   const params: Query = req.query;
-  let id: number = +(""+params.id);
+  let id: number = +("" + params.id);
 
   let result = await utils.deleteTip(body, id);
 
@@ -83,10 +89,10 @@ app.delete("/tip", async(req, res) => {
   res.sendStatus(200);
 });
 
-app.patch("/tip", async(req, res) => {
+app.patch("/tip", verifyJWT, async (req, res) => {
   const body: AuthRequestBody = req.body;
   const params: Query = req.query;
-  let id: number = +(""+params.id);
+  let id: number = +("" + params.id);
   let value: string = "" + params.value;
 
   let result = await utils.updateTip(body, id, value);
@@ -95,8 +101,7 @@ app.patch("/tip", async(req, res) => {
     res.sendStatus(400);
     return;
   }
-  let token = jwt.sign({ user: body }, JWT_SECRET);
-  res.send(token);
+  res.sendStatus(200);
 });
 
 app.listen(port, async () => {
