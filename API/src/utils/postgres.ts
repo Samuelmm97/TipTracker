@@ -5,11 +5,20 @@ import { Result } from "ts-postgres/dist/src/result";
 
 const saltRounds = 10;
 
+const POSTGRES_USER = process.env.POSTGRES_USER;
+const POSTGRES_HOST = process.env.POSTGRES_HOST;
+const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD;
+
+if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
+  console.log("MISSING POSTGRES CREDENTIALS");
+  process.exit(0);
+}
+
 const client = new Client({
-  user: process.env.POSTGRES_USER,
-  host: process.env.POSTGRES_HOST,
+  user: POSTGRES_USER,
+  host: POSTGRES_HOST,
   database: "tippal",
-  password: process.env.POSTGRES_PASSWORD,
+  password: POSTGRES_PASSWORD,
   port: 5432,
 });
 
@@ -32,10 +41,11 @@ export const utils = {
 
         const result = await client.query(
           `INSERT INTO accounts (email, password, created_on, last_login)
-          VALUES ($1, $2, current_timestamp, current_timestamp)`,
-          [user.email, hash]
+            SELECT $2, $3, current_timestamp, current_timestamp
+            WHERE NOT EXISTS (SELECT * FROM accounts WHERE email = $1)`,
+          [user.email, user.email, hash]
         );
-
+        console.log(result);
       });
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
@@ -78,7 +88,7 @@ export const utils = {
       if (idResult.status === "SELECT 0") {
         return false;
       }
-      let id : number = +("" + idResult.rows[0][0]);
+      let id: number = +("" + idResult.rows[0][0]);
 
       const tipResult = await client.query(
         `INSERT INTO transactions (tip_amount, user_id, tip_date) 
@@ -87,13 +97,13 @@ export const utils = {
       );
 
       return true;
-    } catch(e) {
+    } catch (e) {
       console.log("Error adding tip to database", e);
       return false;
     }
   },
-  
-  getTips: async(user: AuthRequestBody, period: number) => {
+
+  getTips: async (user: AuthRequestBody, period: number) => {
     try {
       const idResult = await client.query(
         `SELECT user_id FROM accounts
@@ -104,12 +114,12 @@ export const utils = {
       if (idResult.status === "SELECT 0") {
         return null;
       }
-      let id : number = +("" + idResult.rows[0][0]);
+      let id: number = +("" + idResult.rows[0][0]);
 
       const histResult = await client.query(
-          `SELECT * FROM transactions
-          WHERE user_id = $1 AND tip_date > (current_timestamp::DATE - $2::integer)`, 
-          [id, period]
+        `SELECT * FROM transactions
+          WHERE user_id = $1 AND tip_date > (current_timestamp::DATE - $2::integer)`,
+        [id, period]
       );
 
       if (histResult.status === "SELECT 0") {
@@ -123,35 +133,38 @@ export const utils = {
 
       for (let i = 0; i < histResult.rows.length; ++i) {
         for (let j = 0; j < histResult.rows[0].length; ++j) {
-
-          switch(j) {
+          switch (j) {
             case 0:
-              ids.push(+(""+histResult.rows[i][j]));
+              ids.push(+("" + histResult.rows[i][j]));
               break;
-            case 1: 
-              tips.push(""+histResult.rows[i][j]);
+            case 1:
+              tips.push("" + histResult.rows[i][j]);
               break;
             case 2:
-              usr_ids.push(+(""+histResult.rows[i][j]));
+              usr_ids.push(+("" + histResult.rows[i][j]));
               break;
             case 3:
-              dates.push(""+histResult.rows[i][j]);
+              dates.push("" + histResult.rows[i][j]);
               break;
             default:
           }
         }
       }
 
-      let history = { "tip_ids": ids, "tips": tips, "usr_ids": usr_ids, "dates":dates };
+      let history = {
+        tip_ids: ids,
+        tips: tips,
+        usr_ids: usr_ids,
+        dates: dates,
+      };
       return history;
-
-    } catch(e) {
+    } catch (e) {
       console.log("Error adding tip to database", e);
       return null;
     }
   },
 
-  deleteTip: async(user: AuthRequestBody, id: number) => {
+  deleteTip: async (user: AuthRequestBody, id: number) => {
     try {
       const usrIdResult = await client.query(
         `SELECT user_id FROM transactions
@@ -162,7 +175,7 @@ export const utils = {
       if (usrIdResult.status === "SELECT 0") {
         return false;
       }
-      let usrId : number = +("" + usrIdResult.rows[0][0]);
+      let usrId: number = +("" + usrIdResult.rows[0][0]);
 
       const emailResult = await client.query(
         `SELECT email FROM accounts
@@ -173,7 +186,7 @@ export const utils = {
       if (emailResult.status === "SELECT 0") {
         return false;
       }
-      let email : string = "" + emailResult.rows[0][0];
+      let email: string = "" + emailResult.rows[0][0];
 
       if (email != user.email) {
         return false;
@@ -185,15 +198,14 @@ export const utils = {
         [id]
       );
 
-      return (deleteResult.status === "DELETE 1");
-
-    } catch(e) {
+      return deleteResult.status === "DELETE 1";
+    } catch (e) {
       console.log("Error deleting tip from database", e);
       return false;
     }
   },
 
-  updateTip: async(user: AuthRequestBody, id: number, value: string) => {
+  updateTip: async (user: AuthRequestBody, id: number, value: string) => {
     try {
       const usrIdResult = await client.query(
         `SELECT user_id FROM transactions
@@ -204,7 +216,7 @@ export const utils = {
       if (usrIdResult.status === "SELECT 0") {
         return false;
       }
-      let usrId : number = +("" + usrIdResult.rows[0][0]);
+      let usrId: number = +("" + usrIdResult.rows[0][0]);
 
       const emailResult = await client.query(
         `SELECT email FROM accounts
@@ -215,7 +227,7 @@ export const utils = {
       if (emailResult.status === "SELECT 0") {
         return false;
       }
-      let email : string = "" + emailResult.rows[0][0];
+      let email: string = "" + emailResult.rows[0][0];
 
       if (email != user.email) {
         return false;
@@ -228,9 +240,8 @@ export const utils = {
         [value, id]
       );
 
-      return (updateResult.status === "UPDATE 1");
-
-    } catch(e) {
+      return updateResult.status === "UPDATE 1";
+    } catch (e) {
       console.log("Error updating tip on database", e);
       return false;
     }
