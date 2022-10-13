@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: kDebugMode,
       title: 'Tips App',
       routes: Routes.buildRoutes(),
-      initialRoute: Routes.authIndexScreen,
+      initialRoute: Routes.splashScreen,
     );
   }
 }
