@@ -1,7 +1,8 @@
 import { Client, Query } from "ts-postgres";
-import { AuthRequestBody } from "../models/models";
+import { AuthRequestBody, VehiclePatchMode, LocationPatchMode } from "../models/models";
 import bcrypt from "bcrypt";
 import { Result } from "ts-postgres/dist/src/result";
+import { add } from "date-fns";
 
 const saltRounds = 10;
 
@@ -243,6 +244,288 @@ export const utils = {
       return updateResult.status === "UPDATE 1";
     } catch (e) {
       console.log("Error updating tip on database", e);
+      return false;
+    }
+  },
+
+  //Status: done, testing needed
+  addVehicle: async (id: number, cost2Own: number, make: string, model: string, year: number) => {
+    try {
+      const result = await client.query(
+      `INSERT INTO vehicles (profile_id, cost_to_own, make, nodel, year)
+      VALUES ($1::BIGINT, $2::FLOAT8::NUMERIC::MONEY, $3, $4, $5::INT)`,
+      [id, cost2Own, make, model, year]
+      );
+
+      return true;
+    } catch (e) {
+      console.log("Error adding car to database", e);
+      return false;
+    }
+  },
+
+  //Status: done, testing needed
+  getVehicle: async(id: number) => {
+    try {
+      const vehicleResult = await client.query(
+        `SELECT * FROM vehicles
+        WHERE profile_id = $1`,
+        [id]
+      );
+
+      if (vehicleResult.status === "SELECT 0") {
+        return null;
+      }
+
+      let cost_to_own: number[] = [];
+      let make: string[] = [];
+      let model: string[] = [];
+      let year: number[] = [];
+
+      for (let i = 0; i < vehicleResult.rows.length; ++i) {
+        for (let j = 0; j < vehicleResult.rows[0].length; ++j) {
+          switch (j) {
+            case 0:
+              cost_to_own.push(+(""+vehicleResult.rows[i][j]));
+              break;
+            case 1:
+              make.push(""+vehicleResult.rows[i][j]);
+              break;
+            case 2:
+              model.push(""+vehicleResult.rows[i][j]);
+              break;
+            case 3:
+              year.push(+(""+vehicleResult.rows[i][j]));
+              break;
+            default:
+          }
+        }
+      }
+
+      let vehicle = {
+        cost_to_own: cost_to_own,
+        make: make,
+        model: model,
+        year: year,
+      };
+
+      return vehicle;
+    } catch(e) {
+      console.log("Error getting vehicle from database", e);
+      return null;
+    }
+  },
+
+  //Status: done, testing needed
+  deleteVehicle: async(id: number) => {
+    try {
+      const deleteResult = await client.query(
+        `DELETE FROM vehicles
+        WHERE vehicle_id = $1`,
+        [id]
+      );
+
+      return deleteResult.status === "DELETE 1";
+    } catch(e) {
+      console.log("Error deleting vehicle from database", e);
+      return false;
+    }
+  },
+
+  //Status: done, testing needed
+  patchVehicle: async(mode: VehiclePatchMode, id: number, value: string) => {
+    try {
+      let updateResult = null;
+
+      switch (mode) {
+        case VehiclePatchMode.cost_to_own:
+          updateResult = await client.query(
+            `UPDATE vehicles
+            SET cost_to_own = $1::FLOAT8::NUMERIC::MONEY
+            WHERE vehicle_id = $2`,
+            [value, id]
+          );
+          break;
+        case VehiclePatchMode.make:
+          updateResult = await client.query(
+            `UPDATE vehicles
+            SET make = $1
+            WHERE vehicle_id = $2`,
+            [value, id]
+          );
+          break;
+        case VehiclePatchMode.model:
+          updateResult = await client.query(
+            `UPDATE vehicles
+            SET model = $1
+            WHERE vehicle_id = $2`,
+            [value, id]
+          );
+          break;
+        case VehiclePatchMode.year:
+          updateResult = await client.query(
+            `UPDATE vehicles
+            SET make = $1::INT
+            WHERE vehicel_id = $2`,
+            [value, id]
+          );
+          break;
+        default:
+          return false;
+      }
+
+      return updateResult.status === "UPDATE 1";
+
+    } catch(e) {
+      console.log("Error patching vehicle in database", e);
+      return false;
+    }
+  },
+
+  //Status: done, testing needed
+  addLocation: async(address1: string, address2: string, city: string, state: string, zip_code: string) => {
+    try {
+      const result = await client.query(
+        `INSERT INTO locations (address1, address2, city, state, zip_code)
+        VALUES ($1, $2, $3, $4, $5)`,
+        [address1, address2, city, state, zip_code]
+      );
+
+      return result.status === "INSERT 1"
+    } catch(e) {
+      console.log("Error adding location to database", e);
+      return false;
+    }
+  },
+
+  //TODO: apply different search modes?
+  getLocation: async(id: number) => {
+    try {
+      const locationResult = await client.query(
+        `SELECT * FROM locations
+        WHERE location_id = $1`,
+        [id]
+      );
+
+      if (locationResult.status === "SELECT 0") {
+        return null;
+      }
+
+      let address1: string[] = [];
+      let address2: string[] = [];
+      let city: string[] = [];
+      let state: string[] = [];
+      let zip_code: string[] = [];
+
+      for (let i = 0; i < locationResult.rows.length; ++i) {
+        for (let j = 0; j < locationResult.rows[0].length; ++j) {
+          switch (j) {
+            case 0:
+              address1.push(""+locationResult.rows[i][j]);
+              break;
+            case 1:
+              address2.push(""+locationResult.rows[i][j]);
+              break;
+            case 2:
+              city.push(""+locationResult.rows[i][j]);
+              break;
+            case 3:
+              state.push(""+locationResult.rows[i][j]);
+              break;
+            case 4:
+              zip_code.push(""+locationResult.rows[i][j]);
+              break;
+            default:
+          }
+        }
+      }
+
+      let locations = {
+        adress1: address1,
+        address2: address2,
+        city: city,
+        state: state,
+        zip_code: zip_code,
+      };
+
+      return locations;
+    } catch(e) {
+      console.log("Error getting location", e);
+      return null;
+    }
+  },
+
+  //Status: done, testing needed
+  // In what situations should a location be deleted?
+  deleteLocation: async(id: number) => {
+    try {
+      const deleteResult = await client.query(
+        `DELETE FROM locations
+        WHERE location_id = $1`,
+        [id]
+      );
+
+      return deleteResult.status === "DELETE 1";
+    } catch(e) {
+      console.log("Error deleting location from database", e);
+      return false;
+    }
+  },
+
+  //Status: done, testing needed
+  // In what situations should a location be updated?
+  patchLocation: async(mode: LocationPatchMode, id: number, value: string) => {
+    try {
+      let updateResult = null;
+
+      switch(mode) {
+        case LocationPatchMode.address1:
+          updateResult = await client.query(
+            `UPDATE locations
+            SET address1 = $1
+            WHERE location_id = $2`,
+            [id, value]
+          );
+          break;
+        case LocationPatchMode.address2:
+          updateResult = await client.query(
+            `UPDATE locations
+            SET address2 = $1
+            WHERE location_id = $2`,
+            [id, value]
+          );
+          break;
+        case LocationPatchMode.city:
+          updateResult = await client.query(
+            `UPDATE locations
+            SET city = $1
+            WHERE location_id = $2`,
+            [id, value]
+          );
+          break;
+        case LocationPatchMode.state:
+          updateResult = await client.query(
+            `UPDATE locations
+            SET state = $1
+            WHERE location_id = $2`,
+            [id, value]
+          );
+          break;
+        case LocationPatchMode.zip_code:
+          updateResult = await client.query(
+            `UPDATE locations
+            SET zip_code = $1
+            WHERE location_id = $2`,
+            [id, value]
+          );
+          break;
+        default:
+          return false;
+      }
+
+      return updateResult.status === "UPDATE 1";
+    } catch(e) {
+      console.log("Error updating location", e);
       return false;
     }
   },
