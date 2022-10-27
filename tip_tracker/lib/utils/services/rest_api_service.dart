@@ -12,6 +12,8 @@ class RestApiService {
   static String apiPath = ApiPath().apiPath;
   static final SecureStorageService _storage = SecureStorageService();
 
+  /* HTTP METHODS */
+
   static Future<dynamic> _get(String url) async {
     try {
       Map<String, String> headers = {"Accept": "application/json"};
@@ -93,7 +95,7 @@ class RestApiService {
     }
   }
 
-  // AUTHENTICATION
+  /* AUTHENTICATION */
 
   static Future<dynamic> login(String email, String password) async {
     Map<String, String> body = {
@@ -112,7 +114,7 @@ class RestApiService {
     return await _get("$apiPath/verify_token");
   }
 
-  // USERS
+  /* USERS */
 
   static Future<dynamic> profile(String userID) async {
     return await _get("$apiPath/profile/$userID");
