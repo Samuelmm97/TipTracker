@@ -1,7 +1,7 @@
-import { Client, Query } from "ts-postgres";
-import { AuthRequestBody } from "../models/models";
+import postgres from "postgres";
+import { AuthRequestBody, ProfileReqBody } from "../models/models";
 import bcrypt from "bcrypt";
-import { Result } from "ts-postgres/dist/src/result";
+// import { Result } from "ts-postgres/dist/src/result";
 
 const saltRounds = 10;
 
@@ -14,23 +14,16 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
   process.exit(0);
 }
 
-const client = new Client({
-  user: POSTGRES_USER,
-  host: POSTGRES_HOST,
-  database: "tippal",
+const sql = postgres({
+  user: process.env.POSTGRES_USER,
+  host: process.env.POSTGRES_HOST,
+  database: "tipmate",
   password: POSTGRES_PASSWORD,
   port: 5432,
+  ssl: true,
 });
 
 export const utils = {
-  connectDB: async () => {
-    await client.connect();
-    return "connected";
-  },
-  disconnect: async () => {
-    await client.end();
-    return "ended";
-  },
   registerUser: async (user: AuthRequestBody) => {
     try {
       bcrypt.hash(user.password, saltRounds, async (err, hash: string) => {
@@ -39,13 +32,9 @@ export const utils = {
           return err;
         }
 
-        const result = await client.query(
-          `INSERT INTO accounts (email, password, created_on, last_login)
-            SELECT $2, $3, current_timestamp, current_timestamp
-            WHERE NOT EXISTS (SELECT * FROM accounts WHERE email = $1)`,
-          [user.email, user.email, hash]
-        );
-        console.log(result);
+        const result =
+          await sql`INSERT INTO accounts (email, password, created_on, last_login)
+          VALUES (${user.email}, ${hash}, current_timestamp, current_timestamp)`;
       });
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
@@ -54,16 +43,10 @@ export const utils = {
   },
   login: async (user: AuthRequestBody) => {
     try {
-      const result = await client.query(
-        `SELECT password FROM accounts
-         WHERE email = $1`,
-        [user.email]
-      );
+      const result = await sql`SELECT password FROM accounts
+         WHERE email = ${user.email}`;
 
-      if (result.status === "SELECT 0") {
-        return false;
-      }
-      let password = "" + result.rows[0][0];
+      let password = "" + result[0].password;
       let isValid = await new Promise((res, rej) => {
         bcrypt.compare(user.password, password, (err, result) => {
           res(result);
@@ -76,25 +59,56 @@ export const utils = {
       return false;
     }
   },
+  onboarding: async (profile: ProfileReqBody) => {
+    try {
+      await sql`insert into profile (employee_type, hours_per_week, work_address, wage, user_id, last_modified)
+         values (${profile.employeeType}, ${profile.hoursPerWeek ?? null}, ${
+        profile.workAddress ?? null
+      }, ${profile.wage}, ${profile.userId}, current_timestamp)`;
+
+      return true;
+    } catch (e) {
+      console.log("Error onboarding postgres", e);
+      return false;
+    }
+  },
+  getProfile: async (userId: string) => {
+    try {
+      const result = await sql`SELECT * FROM profile
+         WHERE user_id = ${userId}`;
+      return result[0];
+    } catch (e) {
+      console.log("Error getting profile postgres", e);
+      return false;
+    }
+  },
+  updateProfile: async (userId: string, profile: any) => {
+    try {
+      const result = await sql`update profile
+                              set ${sql(profile)},
+                              "last_modified" = current_timestamp
+                              WHERE user_id = ${userId}`;
+      return true;
+    } catch (e) {
+      console.log("Error getting profile postgres", e);
+      return false;
+    }
+  },
 
   addTip: async (user: AuthRequestBody, amount: string) => {
     try {
-      const idResult = await client.query(
-        `SELECT user_id FROM accounts
-        WHERE email = $1`,
-        [user.email]
-      );
+      const idResult = await sql`SELECT id FROM accounts
+        WHERE email = ${user.email}`;
 
-      if (idResult.status === "SELECT 0") {
+      if (idResult.length == 0) {
         return false;
       }
-      let id: number = +("" + idResult.rows[0][0]);
 
-      const tipResult = await client.query(
-        `INSERT INTO transactions (tip_amount, user_id, tip_date) 
-        VALUES ($1::FLOAT8::NUMERIC::MONEY, $2, current_timestamp)`,
-        [amount, id]
-      );
+      let id: number = +("" + idResult[0].id);
+
+      const tipResult =
+        await sql`INSERT INTO transactions (tip_amount, user_id, tip_date) 
+        VALUES (${amount}::FLOAT8::NUMERIC::MONEY, ${id}, current_timestamp)`;
 
       return true;
     } catch (e) {
@@ -105,59 +119,19 @@ export const utils = {
 
   getTips: async (user: AuthRequestBody, period: number) => {
     try {
-      const idResult = await client.query(
-        `SELECT user_id FROM accounts
-        WHERE email = $1`,
-        [user.email]
-      );
-
-      if (idResult.status === "SELECT 0") {
+      const idResult = await sql`SELECT id FROM accounts
+        WHERE email = ${user.email}`;
+      if (idResult.length == 0) {
         return null;
       }
-      let id: number = +("" + idResult.rows[0][0]);
-
-      const histResult = await client.query(
-        `SELECT * FROM transactions
-          WHERE user_id = $1 AND tip_date > (current_timestamp::DATE - $2::integer)`,
-        [id, period]
-      );
-
-      if (histResult.status === "SELECT 0") {
+      let id: number = +("" + idResult[0].id);
+      const histResult = await sql`SELECT * FROM transactions
+          WHERE user_id = ${id} AND tip_date > (current_timestamp::DATE - ${period}::integer)`;
+      if (histResult.length == 0) {
         return null;
       }
-
-      let ids: number[] = [];
-      let tips: string[] = [];
-      let usr_ids: number[] = [];
-      let dates: string[] = [];
-
-      for (let i = 0; i < histResult.rows.length; ++i) {
-        for (let j = 0; j < histResult.rows[0].length; ++j) {
-          switch (j) {
-            case 0:
-              ids.push(+("" + histResult.rows[i][j]));
-              break;
-            case 1:
-              tips.push("" + histResult.rows[i][j]);
-              break;
-            case 2:
-              usr_ids.push(+("" + histResult.rows[i][j]));
-              break;
-            case 3:
-              dates.push("" + histResult.rows[i][j]);
-              break;
-            default:
-          }
-        }
-      }
-
-      let history = {
-        tip_ids: ids,
-        tips: tips,
-        usr_ids: usr_ids,
-        dates: dates,
-      };
-      return history;
+      console.log(histResult);
+      return histResult;
     } catch (e) {
       console.log("Error adding tip to database", e);
       return null;
@@ -166,39 +140,9 @@ export const utils = {
 
   deleteTip: async (user: AuthRequestBody, id: number) => {
     try {
-      const usrIdResult = await client.query(
-        `SELECT user_id FROM transactions
-        WHERE id = $1`,
-        [id]
-      );
-
-      if (usrIdResult.status === "SELECT 0") {
-        return false;
-      }
-      let usrId: number = +("" + usrIdResult.rows[0][0]);
-
-      const emailResult = await client.query(
-        `SELECT email FROM accounts
-        WHERE user_id = $1`,
-        [usrId]
-      );
-
-      if (emailResult.status === "SELECT 0") {
-        return false;
-      }
-      let email: string = "" + emailResult.rows[0][0];
-
-      if (email != user.email) {
-        return false;
-      }
-
-      const deleteResult = await client.query(
-        `DELETE FROM transactions
-        WHERE id = $1`,
-        [id]
-      );
-
-      return deleteResult.status === "DELETE 1";
+      const deleteResult = await sql`DELETE FROM transactions
+        WHERE id = ${id}`;
+      return true;
     } catch (e) {
       console.log("Error deleting tip from database", e);
       return false;
@@ -207,40 +151,10 @@ export const utils = {
 
   updateTip: async (user: AuthRequestBody, id: number, value: string) => {
     try {
-      const usrIdResult = await client.query(
-        `SELECT user_id FROM transactions
-        WHERE id = $1`,
-        [id]
-      );
-
-      if (usrIdResult.status === "SELECT 0") {
-        return false;
-      }
-      let usrId: number = +("" + usrIdResult.rows[0][0]);
-
-      const emailResult = await client.query(
-        `SELECT email FROM accounts
-        WHERE user_id = $1`,
-        [usrId]
-      );
-
-      if (emailResult.status === "SELECT 0") {
-        return false;
-      }
-      let email: string = "" + emailResult.rows[0][0];
-
-      if (email != user.email) {
-        return false;
-      }
-
-      const updateResult = await client.query(
-        `UPDATE transactions
-        SET tip_amount = $1::FLOAT8::NUMERIC::MONEY
-        WHERE id = $2`,
-        [value, id]
-      );
-
-      return updateResult.status === "UPDATE 1";
+      const updateResult = await sql`UPDATE transactions
+        SET tip_amount = ${value}::FLOAT8::NUMERIC::MONEY
+        WHERE id = ${id}`;
+      return true;
     } catch (e) {
       console.log("Error updating tip on database", e);
       return false;
