@@ -1,74 +1,84 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:tip_tracker/constants/api_path.dart';
-import 'package:http/http.dart' as http;
-import 'package:tip_tracker/utils/helpers/logger_helper.dart';
+import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
 
 class RestApiService {
-  static String apiPath = ApiPath.androidLocalHost;
+  // Dynamically retrieves API path
+  static String apiPath = ApiPath().apiPath;
+  static final SecureStorageService _storage = SecureStorageService();
 
   static Future<dynamic> _get(String url) async {
     try {
-      String? jwt = await SecureStorageService().readItem("jwt");
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          "Accept": "application/json",
-          "Authorization": jwt ?? "None",
-        },
+      Map<String, String> headers = {"Accept": "application/json"};
+      headers.addAll(await _storage.readTokens());
+
+      final Response response = await Dio().get(
+        url,
+        options: Options(
+          headers: headers,
+        ),
       );
       return response;
     } catch (e) {
-      logger.e(e.toString());
-      throw Exception(e.toString());
+      if (e is DioError) {
+        if (e.error is SocketException) {
+          throw (e.error);
+        } else {
+          rethrow;
+        }
+      }
     }
   }
 
-  static Future<dynamic> _post(String url, Map<String, String> body) async {
+  static Future<dynamic> _post(String url, Map<String, dynamic> body) async {
     try {
-      String? jwt = await SecureStorageService().readItem("jwt");
-      final response = await http.post(
-        body: json.encode(body),
-        Uri.parse(url),
-        headers: {
-          "Accept": "application/json",
-          "Content-type": "application/json",
-          "Authorization": jwt ?? "None",
-        },
+      Map<String, String> headers = {
+        "Acception": "application/json",
+        "Content-type": "application/json",
+      };
+      headers.addAll(await _storage.readTokens());
+
+      final Response response = await Dio().post(
+        url,
+        data: json.encode(body),
+        options: Options(
+          headers: headers,
+        ),
       );
+      _storage.storeTokens(response.headers.map["auth-token"]!.first,
+          response.headers.map["refresh-token"]!.first);
       return response;
     } catch (e) {
-      logger.e(e.toString());
-      throw Exception(e.toString());
+      if (e is DioError) {
+        if (e.error is SocketException) {
+          throw (e.error);
+        } else {
+          rethrow;
+        }
+      }
     }
   }
 
-  static Future<dynamic> authenticate(String email, String password) async {
-    Map<String, String> body = {
-      "email": email,
-      "password": password,
-    };
-    return await _post(
-      "$apiPath/api/get_token",
-      body,
-    );
-  }
+  // AUTHENTICATION
 
   static Future<dynamic> login(String email, String password) async {
     Map<String, String> body = {
       "email": email,
       "password": password,
     };
-    return await _post("$apiPath/api/login", body);
+    return await _post("$apiPath/auth/login", body);
   }
 
   static Future<dynamic> registerUser(
-      String email, String password, String confirmPassword) async {
-    Map<String, String> body = {
-      "email": email,
-      "password": password,
-    };
-    return await _post("$apiPath/api/register", body);
+      RegistrationModel registrationModel) async {
+    return await _post("$apiPath/api/register", registrationModel.toJson());
+  }
+
+  static Future<dynamic> verifyToken() async {
+    return await _get("$apiPath/auth/verify_token");
   }
 }
