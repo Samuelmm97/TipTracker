@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:tip_tracker/constants/api_path.dart';
+import 'package:tip_tracker/core/auth/login/cubit/user_model.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
 
@@ -63,6 +64,35 @@ class RestApiService {
     }
   }
 
+  static Future<dynamic> _put(String url, Map<String, dynamic> body) async {
+    try {
+      Map<String, String> headers = {
+        "Acception": "application/json",
+        "Content-type": "application/json",
+      };
+      headers.addAll(await _storage.readTokens());
+
+      final Response response = await Dio().put(
+        url,
+        data: json.encode(body),
+        options: Options(
+          headers: headers,
+        ),
+      );
+      _storage.storeTokens(response.headers.map["auth-token"]!.first,
+          response.headers.map["refresh-token"]!.first);
+      return response;
+    } catch (e) {
+      if (e is DioError) {
+        if (e.error is SocketException) {
+          throw (e.error);
+        } else {
+          rethrow;
+        }
+      }
+    }
+  }
+
   // AUTHENTICATION
 
   static Future<dynamic> login(String email, String password) async {
@@ -80,5 +110,15 @@ class RestApiService {
 
   static Future<dynamic> verifyToken() async {
     return await _get("$apiPath/verify_token");
+  }
+
+  // USERS
+
+  static Future<dynamic> profile(String userID) async {
+    return await _get("$apiPath/profile/$userID");
+  }
+
+  static Future<dynamic> putProfile(String userID, UserModel user) async {
+    return await _put("$apiPath/profile/$userID", user.toJson());
   }
 }
