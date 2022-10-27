@@ -123,4 +123,8 @@ class RestApiService {
   static Future<dynamic> putProfile(String userID, UserModel user) async {
     return await _put("$apiPath/profile/$userID", user.toJson());
   }
+
+  static Future<dynamic> postProfile(String userID, UserModel user) async {
+    return await _post("$apiPath/onboarding", user.toJson());
+  }
 }
