@@ -1,6 +1,20 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+
 class ApiPath {
-  // 10.0.0.2 is the local ip for Android emulator
-  static String iosLocalHost = 'http://localhost:8000/api';
-  static String androidLocalHost = 'http://10.0.0.2:8000/api';
-  static String hostingService = '?/api';
+  late String apiPath;
+  static String androidLocalhost = "http://10.0.2.2:3000/api";
+  static String iosLocalhost = "http://localhost:3000/api";
+  static String host = "API URL!";
+
+  ApiPath() {
+    if (!kDebugMode) {
+      apiPath = host;
+    } else if (Platform.isAndroid) {
+      apiPath = androidLocalhost;
+    } else {
+      apiPath = iosLocalhost;
+    }
+  }
 }

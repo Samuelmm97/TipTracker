@@ -1,8 +1,25 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:tip_tracker/config/routes/routes.dart';
+import 'package:tip_tracker/core/auth/login/cubit/login_cubit.dart';
+import 'package:tip_tracker/core/auth/registration/cubit/registration_cubit.dart';
+
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<LoginCubit>(
+          create: (_) => LoginCubit(),
+        ),
+        Provider<RegistrationCubit>(
+          create: (_) => RegistrationCubit(),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -12,9 +29,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: kDebugMode,
       title: 'Tips App',
       routes: Routes.buildRoutes(),
-      initialRoute: Routes.authIndexScreen,
+      initialRoute: Routes.splashScreen,
     );
   }
 }
