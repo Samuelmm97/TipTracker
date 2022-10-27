@@ -14,9 +14,9 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
   process.exit(0);
 }
 
-const sql = postgres({
-  user: process.env.POSTGRES_USER,
-  host: process.env.POSTGRES_HOST,
+const client = new Client({
+  user: POSTGRES_USER,
+  host: POSTGRES_HOST,
   database: "tipmate",
   password: POSTGRES_PASSWORD,
   port: 5432,
