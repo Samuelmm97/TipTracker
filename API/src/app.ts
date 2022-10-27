@@ -34,7 +34,10 @@ app.post("/register", async (req, res) => {
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
   const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
-  res.status(201).send({message: "Registration successful", data: {"auth-token": token, "refresh-token": refreshToken}});
+  res.header("auth-token", token);
+  res.header("refresh-token", refreshToken);
+
+  res.status(201).send({message: "Registration successful"});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: error});
@@ -55,7 +58,10 @@ app.post("/login", async (req, res) => {
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
   const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
-  res.status(200).send({message: "Login successful", data: {"auth-token": token, "refresh-token": refreshToken}});
+  res.header("auth-token", token);
+  res.header("refresh-token", refreshToken);
+
+  res.status(200).send({message: "Login successful"});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: error});
@@ -102,7 +108,7 @@ app.get("/tip", async (req, res) => {
       return;
     }
 
-    res.status(200).send({data: result});
+    res.status(200).send({message: "Tip entry retrieved.", data: result});
   } catch (error) {
     console.log(error);
     res.status(500).send({message: error});
