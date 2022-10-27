@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tip_tracker/core/auth/auth_index_screen.dart';
 import 'package:tip_tracker/core/auth/login/login_screen.dart';
 import 'package:tip_tracker/core/auth/registration/registration_screen.dart';
+import 'package:tip_tracker/modules/index/index_screen.dart';
 import 'package:tip_tracker/modules/splash/splash_screen.dart';
 
 class Routes {
@@ -23,7 +24,7 @@ class Routes {
       //     ForgotPassword(),
 
       // Modules
-      // indexScreen: (BuildContext context) => const IndexScreen(),
+      indexScreen: (BuildContext context) => const IndexScreen(),
       // userScreen: (BuildContext context) => const UserProfileScreen(),
     };
   }
