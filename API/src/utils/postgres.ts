@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { Client, Query } from "ts-postgres";
 import { AuthRequestBody, ProfileReqBody } from "../models/models";
 import bcrypt from "bcrypt";
 // import { Result } from "ts-postgres/dist/src/result";
@@ -14,7 +15,7 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
   process.exit(0);
 }
 
-const client = new Client({
+const sql = postgres({
   user: POSTGRES_USER,
   host: POSTGRES_HOST,
   database: "tipmate",

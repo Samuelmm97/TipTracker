@@ -37,7 +37,7 @@ app.post("/register", async (req, res) => {
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
-  res.status(201).send({message: "Registration successful"});
+  res.status(201).send({message: "Registration successful."});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: error});
@@ -51,7 +51,7 @@ app.post("/login", async (req, res) => {
   let result = await utils.login(body);
 
   if (!result) {
-    res.status(400).send({message: "Login failed: Invalid username/password"});
+    res.status(400).send({message: "Login failed: Invalid username/password."});
     return;
   }
 
@@ -61,7 +61,7 @@ app.post("/login", async (req, res) => {
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
-  res.status(200).send({message: "Login successful"});
+  res.status(200).send({message: "Login successful."});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: error});
@@ -85,10 +85,10 @@ app.get("/verify_token", verifyJWT, async (req, res) => {
       let result = await utils.addTip(body, amount);
   
       if (!result) {
-        res.send(400).send({message: "Error adding tip into the system"});
+        res.send(400).send({message: "Error adding tip into the system."});
         return;
       }
-      res.status(200).send({message: "Tip entry added"});
+      res.status(200).send({message: "Tip entry added."});
     } catch (error) {
       console.log(error);
       res.status(500).send({message: error});
@@ -185,7 +185,7 @@ app.put("/profile/:userId", async (req, res) => {
     res.status(400).send({message: "User profile update failed."});
     return;
   }
-  res.status(200).send({message: "User profile updated successfully"});
+  res.status(200).send({message: "User profile updated successfully."});
 });
 
 app.listen(port, async () => {
