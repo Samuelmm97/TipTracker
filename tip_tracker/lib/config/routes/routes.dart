@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tip_tracker/modules/index/index_screen.dart';
 import 'package:tip_tracker/core/auth/auth_index_screen.dart';
 import 'package:tip_tracker/core/auth/login/login_screen.dart';
 import 'package:tip_tracker/core/auth/registration/registration_screen.dart';

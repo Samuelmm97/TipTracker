@@ -1,19 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:tip_tracker/modules/index/pages/manual_entry.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class IndexScreen extends StatefulWidget {
-  const IndexScreen({super.key});
+  const IndexScreen({Key? key}) : super(key: key);
 
   @override
   State<IndexScreen> createState() => _IndexScreenState();
 }
 
 class _IndexScreenState extends State<IndexScreen> {
-  @override
+
+  int currentIndex = 1;
+
+  final screens = [
+    Center(
+      child: Text(
+        'USER_PAGE_HERE',
+        style: GoogleFonts.jost(fontSize: 32),
+      ),
+    ),
+    const ManualEntry(),
+    Center(
+      child: Text(
+        'Analytics_PAGE_HERE',
+        style: GoogleFonts.jost(fontSize: 32),
+      ),
+    ),
+  ];
+
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Text("Index"),
+      backgroundColor: const Color(0xff183A37),
+      body: screens[currentIndex],
+
+      //  Bottom Nav Bar
+      bottomNavigationBar: BottomNavigationBar(
+        //  B. Nav Bar design
+        backgroundColor: const Color(0x00ffffff),
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+        currentIndex: currentIndex,
+        onTap: (index) => setState(() => currentIndex = index),
+        selectedItemColor: const Color(0xff0BFF4F),
+        unselectedItemColor: const Color(0x550BFF4F),
+        iconSize: 36,
+        showUnselectedLabels: false,
+        selectedFontSize: 12,
+        //  Items
+        items: [
+          //  Index 0, Account
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle_sharp),
+            label: 'Account',
+          ),
+
+          //  Index 1, Manual Entery
+          BottomNavigationBarItem(
+            icon: Icon(Icons.app_registration_rounded),
+            label: 'Custom Entry',
+          ),
+
+          //  Index 2, Analytics
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_rounded),
+            label: 'Analytics',
+          ),
+        ],
+      ),
     );
   }
 }
