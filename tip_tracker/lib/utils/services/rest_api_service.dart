@@ -70,15 +70,15 @@ class RestApiService {
       "email": email,
       "password": password,
     };
-    return await _post("$apiPath/auth/login", body);
+    return await _post("$apiPath/login", body);
   }
 
   static Future<dynamic> registerUser(
       RegistrationModel registrationModel) async {
-    return await _post("$apiPath/api/register", registrationModel.toJson());
+    return await _post("$apiPath/register", registrationModel.toJson());
   }
 
   static Future<dynamic> verifyToken() async {
-    return await _get("$apiPath/auth/verify_token");
+    return await _get("$apiPath/verify_token");
   }
 }

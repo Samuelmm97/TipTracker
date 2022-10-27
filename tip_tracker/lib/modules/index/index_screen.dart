@@ -10,6 +10,7 @@ class IndexScreen extends StatefulWidget {
 }
 
 class _IndexScreenState extends State<IndexScreen> {
+
   int currentIndex = 1;
 
   final screens = [
