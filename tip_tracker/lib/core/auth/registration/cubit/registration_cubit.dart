@@ -9,7 +9,7 @@ class RegistrationCubit extends Cubit<RegistrationState> {
   RegistrationCubit() : super(RegistrationInitial());
 
   String errorMessage = "";
-  RegistrationModel registrationModel = RegistrationModel("", "", "", "");
+  RegistrationModel registrationModel = RegistrationModel("", "", "");
   RegistrationRepository registrationRepository = RegistrationRepository();
   SecureStorageService storage = SecureStorageService();
 
@@ -19,7 +19,7 @@ class RegistrationCubit extends Cubit<RegistrationState> {
       await registrationRepository.registerUser(registrationModel);
 
       // Authentication successful
-      registrationModel = RegistrationModel("", "", "", "");
+      registrationModel = RegistrationModel("", "", "");
       emit(Registered());
       return true;
     } catch (e) {

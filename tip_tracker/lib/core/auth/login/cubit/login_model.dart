@@ -1,17 +1,14 @@
-class RegistrationModel {
+class LoginModel {
   String email;
   String password;
-  String confirmPassword;
 
-  RegistrationModel(
+  LoginModel(
     this.email,
     this.password,
-    this.confirmPassword,
   );
 
   Map<String, dynamic> toJson() => {
         "email": email,
         "password": password,
-        "confirmPassword": confirmPassword,
       };
 }

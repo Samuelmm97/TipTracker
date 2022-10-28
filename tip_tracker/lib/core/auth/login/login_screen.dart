@@ -2,6 +2,8 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tip_tracker/config/routes/routes.dart';
+import 'package:tip_tracker/config/styles/error_message_style.dart';
+import 'package:tip_tracker/config/styles/form_field_style.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_cubit.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,9 +22,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    email.text = BlocProvider.of<LoginCubit>(context).email;
-    password.text = BlocProvider.of<LoginCubit>(context).password;
+    email.text = BlocProvider.of<LoginCubit>(context).loginModel.email;
+    password.text = BlocProvider.of<LoginCubit>(context).loginModel.password;
   }
+
+  // TODO: Display error message
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 key: _formKey,
                 child: Center(
                   child: SizedBox(
-                    width: MediaQuery.of(context).size.width * .7,
+                    width: MediaQuery.of(context).size.width * .9,
                     child: Column(
                       children: [
                         //  Welcome message
@@ -61,12 +65,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         //  Email text field
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           child: TextFormField(
                             controller: email,
                             onChanged: (value) =>
-                                BlocProvider.of<LoginCubit>(context).email =
-                                    value,
+                                BlocProvider.of<LoginCubit>(context)
+                                    .loginModel
+                                    .email = value,
                             validator: (value) {
                               if (value == "") {
                                 return "Field must not be empty";
@@ -76,52 +81,34 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                               return null;
                             },
-                            style: const TextStyle(
-                                color: Color.fromARGB(190, 253, 253, 253)),
-                            decoration: const InputDecoration(
-                              fillColor: Color.fromARGB(255, 4, 21, 31),
-                              filled: true,
-                              border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(16))),
-                              hintText: 'Email',
-                              hintStyle: TextStyle(color: Color(0xff3F3B3B)),
-                            ),
+                            style: formFieldTextStyle,
+                            decoration: FormFieldInputDecoration('Email'),
                           ),
                         ),
 
                         //  Password text field
                         Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: const Color(0xff04151F),
-                                  borderRadius: BorderRadius.circular(16)),
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 20.0),
-                                child: TextFormField(
-                                  controller: password,
-                                  obscureText: true,
-                                  onChanged: (value) =>
-                                      BlocProvider.of<LoginCubit>(context)
-                                          .password = value,
-                                  validator: (value) {
-                                    if (value == "") {
-                                      return "Field must not be empty";
-                                    }
-                                    return null;
-                                  },
-                                  style:
-                                      const TextStyle(color: Color(0xff3F3B3B)),
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    hintText: 'Password',
-                                    hintStyle:
-                                        TextStyle(color: Color(0xff3F3B3B)),
-                                  ),
-                                ),
-                              ),
-                            )),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: TextFormField(
+                            controller: password,
+                            obscureText: true,
+                            onChanged: (value) =>
+                                BlocProvider.of<LoginCubit>(context)
+                                    .loginModel
+                                    .password = value,
+                            validator: (value) {
+                              if (value == "") {
+                                return "Field must not be empty";
+                              }
+                              return null;
+                            },
+                            style: formFieldTextStyle,
+                            decoration: FormFieldInputDecoration('Password'),
+                          ),
+                        ),
+
+                        if (state is LoginError)
+                          Text(state.errorMessage, style: errorMessageStyle),
 
                         //  Sign in button
                         Padding(
