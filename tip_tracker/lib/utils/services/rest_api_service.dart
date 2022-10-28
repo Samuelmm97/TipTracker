@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:tip_tracker/constants/api_path.dart';
+import 'package:tip_tracker/core/auth/login/cubit/login_model.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
 
@@ -65,12 +66,8 @@ class RestApiService {
 
   // AUTHENTICATION
 
-  static Future<dynamic> login(String email, String password) async {
-    Map<String, String> body = {
-      "email": email,
-      "password": password,
-    };
-    return await _post("$apiPath/login", body);
+  static Future<dynamic> login(LoginModel loginModel) async {
+    return await _post("$apiPath/login", loginModel.toJson());
   }
 
   static Future<dynamic> registerUser(
