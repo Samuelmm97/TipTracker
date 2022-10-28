@@ -51,7 +51,7 @@ app.post("/login", async (req, res) => {
   let result = await utils.login(body);
 
   if (!result) {
-    res.status(400).send({message: "Login failed: Invalid username/password."});
+    res.status(401).send({message: "Login failed: Invalid username/password."});
     return;
   }
 
