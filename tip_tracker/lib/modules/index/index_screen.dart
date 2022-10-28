@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tip_tracker/modules/index/pages/manual_entry.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tip_tracker/modules/index/pages/user_page.dart';
 
 class IndexScreen extends StatefulWidget {
   const IndexScreen({Key? key}) : super(key: key);
@@ -10,16 +11,10 @@ class IndexScreen extends StatefulWidget {
 }
 
 class _IndexScreenState extends State<IndexScreen> {
-
   int currentIndex = 1;
 
   final screens = [
-    Center(
-      child: Text(
-        'USER_PAGE_HERE',
-        style: GoogleFonts.jost(fontSize: 32),
-      ),
-    ),
+    const UserPage(),
     const ManualEntry(),
     Center(
       child: Text(
@@ -29,6 +24,7 @@ class _IndexScreenState extends State<IndexScreen> {
     ),
   ];
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff183A37),
@@ -48,7 +44,7 @@ class _IndexScreenState extends State<IndexScreen> {
         showUnselectedLabels: false,
         selectedFontSize: 12,
         //  Items
-        items: [
+        items: const [
           //  Index 0, Account
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle_sharp),
