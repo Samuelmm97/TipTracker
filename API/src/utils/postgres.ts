@@ -1,8 +1,8 @@
-import { Client, Query } from "ts-postgres";
-import { AuthRequestBody, VehiclePatchMode, LocationPatchMode } from "../models/models";
+import postgres from "postgres";
+import { AuthRequestBody, ProfileReqBody, VehiclePatchMode, LocationPatchMode } from "../models/models";
 import bcrypt from "bcrypt";
-import { Result } from "ts-postgres/dist/src/result";
 import { add } from "date-fns";
+// import { Result } from "ts-postgres/dist/src/result";
 
 const saltRounds = 10;
 
@@ -14,24 +14,26 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
   console.log("MISSING POSTGRES CREDENTIALS");
   process.exit(0);
 }
-
+/*
 const client = new Client({
   user: POSTGRES_USER,
   host: POSTGRES_HOST,
-  database: "tippal",
+  database: "tipmate",
   password: POSTGRES_PASSWORD,
   port: 5432,
+  ssl: true,
+});*/
+
+const sql = postgres({
+  host : POSTGRES_HOST,
+  port : 5432,
+  database : "tipmate",
+  username : POSTGRES_USER,
+  password : POSTGRES_PASSWORD,
+  ssl: true,
 });
 
 export const utils = {
-  connectDB: async () => {
-    await client.connect();
-    return "connected";
-  },
-  disconnect: async () => {
-    await client.end();
-    return "ended";
-  },
   registerUser: async (user: AuthRequestBody) => {
     try {
       bcrypt.hash(user.password, saltRounds, async (err, hash: string) => {
@@ -40,13 +42,9 @@ export const utils = {
           return err;
         }
 
-        const result = await client.query(
-          `INSERT INTO accounts (email, password, created_on, last_login)
-            SELECT $2, $3, current_timestamp, current_timestamp
-            WHERE NOT EXISTS (SELECT * FROM accounts WHERE email = $1)`,
-          [user.email, user.email, hash]
-        );
-        console.log(result);
+        const result =
+          await sql`INSERT INTO accounts (email, password, created_on, last_login)
+          VALUES (${user.email}, ${hash}, current_timestamp, current_timestamp)`;
       });
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
@@ -55,16 +53,10 @@ export const utils = {
   },
   login: async (user: AuthRequestBody) => {
     try {
-      const result = await client.query(
-        `SELECT password FROM accounts
-         WHERE email = $1`,
-        [user.email]
-      );
+      const result = await sql`SELECT password FROM accounts
+         WHERE email = ${user.email}`;
 
-      if (result.status === "SELECT 0") {
-        return false;
-      }
-      let password = "" + result.rows[0][0];
+      let password = "" + result[0].password;
       let isValid = await new Promise((res, rej) => {
         bcrypt.compare(user.password, password, (err, result) => {
           res(result);
@@ -77,25 +69,56 @@ export const utils = {
       return false;
     }
   },
+  onboarding: async (profile: ProfileReqBody) => {
+    try {
+      await sql`insert into profile (employee_type, hours_per_week, work_address, wage, user_id, last_modified)
+         values (${profile.employeeType}, ${profile.hoursPerWeek ?? null}, ${
+        profile.workAddress ?? null
+      }, ${profile.wage}, ${profile.userId}, current_timestamp)`;
+
+      return true;
+    } catch (e) {
+      console.log("Error onboarding postgres", e);
+      return false;
+    }
+  },
+  getProfile: async (userId: string) => {
+    try {
+      const result = await sql`SELECT * FROM profile
+         WHERE user_id = ${userId}`;
+      return result[0];
+    } catch (e) {
+      console.log("Error getting profile postgres", e);
+      return false;
+    }
+  },
+  updateProfile: async (userId: string, profile: any) => {
+    try {
+      const result = await sql`update profile
+                              set ${sql(profile)},
+                              "last_modified" = current_timestamp
+                              WHERE user_id = ${userId}`;
+      return true;
+    } catch (e) {
+      console.log("Error getting profile postgres", e);
+      return false;
+    }
+  },
 
   addTip: async (user: AuthRequestBody, amount: string) => {
     try {
-      const idResult = await client.query(
-        `SELECT user_id FROM accounts
-        WHERE email = $1`,
-        [user.email]
-      );
+      const idResult = await sql`SELECT id FROM accounts
+        WHERE email = ${user.email}`;
 
-      if (idResult.status === "SELECT 0") {
+      if (idResult.length == 0) {
         return false;
       }
-      let id: number = +("" + idResult.rows[0][0]);
 
-      const tipResult = await client.query(
-        `INSERT INTO transactions (tip_amount, user_id, tip_date) 
-        VALUES ($1::FLOAT8::NUMERIC::MONEY, $2, current_timestamp)`,
-        [amount, id]
-      );
+      let id: number = +("" + idResult[0].id);
+
+      const tipResult =
+        await sql`INSERT INTO transactions (tip_amount, user_id, tip_date) 
+        VALUES (${amount}::FLOAT8::NUMERIC::MONEY, ${id}, current_timestamp)`;
 
       return true;
     } catch (e) {
@@ -106,59 +129,19 @@ export const utils = {
 
   getTips: async (user: AuthRequestBody, period: number) => {
     try {
-      const idResult = await client.query(
-        `SELECT user_id FROM accounts
-        WHERE email = $1`,
-        [user.email]
-      );
-
-      if (idResult.status === "SELECT 0") {
+      const idResult = await sql`SELECT id FROM accounts
+        WHERE email = ${user.email}`;
+      if (idResult.length == 0) {
         return null;
       }
-      let id: number = +("" + idResult.rows[0][0]);
-
-      const histResult = await client.query(
-        `SELECT * FROM transactions
-          WHERE user_id = $1 AND tip_date > (current_timestamp::DATE - $2::integer)`,
-        [id, period]
-      );
-
-      if (histResult.status === "SELECT 0") {
+      let id: number = +("" + idResult[0].id);
+      const histResult = await sql`SELECT * FROM transactions
+          WHERE user_id = ${id} AND tip_date > (current_timestamp::DATE - ${period}::integer)`;
+      if (histResult.length == 0) {
         return null;
       }
-
-      let ids: number[] = [];
-      let tips: string[] = [];
-      let usr_ids: number[] = [];
-      let dates: string[] = [];
-
-      for (let i = 0; i < histResult.rows.length; ++i) {
-        for (let j = 0; j < histResult.rows[0].length; ++j) {
-          switch (j) {
-            case 0:
-              ids.push(+("" + histResult.rows[i][j]));
-              break;
-            case 1:
-              tips.push("" + histResult.rows[i][j]);
-              break;
-            case 2:
-              usr_ids.push(+("" + histResult.rows[i][j]));
-              break;
-            case 3:
-              dates.push("" + histResult.rows[i][j]);
-              break;
-            default:
-          }
-        }
-      }
-
-      let history = {
-        tip_ids: ids,
-        tips: tips,
-        usr_ids: usr_ids,
-        dates: dates,
-      };
-      return history;
+      console.log(histResult);
+      return histResult;
     } catch (e) {
       console.log("Error adding tip to database", e);
       return null;
@@ -167,39 +150,9 @@ export const utils = {
 
   deleteTip: async (user: AuthRequestBody, id: number) => {
     try {
-      const usrIdResult = await client.query(
-        `SELECT user_id FROM transactions
-        WHERE id = $1`,
-        [id]
-      );
-
-      if (usrIdResult.status === "SELECT 0") {
-        return false;
-      }
-      let usrId: number = +("" + usrIdResult.rows[0][0]);
-
-      const emailResult = await client.query(
-        `SELECT email FROM accounts
-        WHERE user_id = $1`,
-        [usrId]
-      );
-
-      if (emailResult.status === "SELECT 0") {
-        return false;
-      }
-      let email: string = "" + emailResult.rows[0][0];
-
-      if (email != user.email) {
-        return false;
-      }
-
-      const deleteResult = await client.query(
-        `DELETE FROM transactions
-        WHERE id = $1`,
-        [id]
-      );
-
-      return deleteResult.status === "DELETE 1";
+      const deleteResult = await sql`DELETE FROM transactions
+        WHERE id = ${id}`;
+      return true;
     } catch (e) {
       console.log("Error deleting tip from database", e);
       return false;
@@ -208,40 +161,10 @@ export const utils = {
 
   updateTip: async (user: AuthRequestBody, id: number, value: string) => {
     try {
-      const usrIdResult = await client.query(
-        `SELECT user_id FROM transactions
-        WHERE id = $1`,
-        [id]
-      );
-
-      if (usrIdResult.status === "SELECT 0") {
-        return false;
-      }
-      let usrId: number = +("" + usrIdResult.rows[0][0]);
-
-      const emailResult = await client.query(
-        `SELECT email FROM accounts
-        WHERE user_id = $1`,
-        [usrId]
-      );
-
-      if (emailResult.status === "SELECT 0") {
-        return false;
-      }
-      let email: string = "" + emailResult.rows[0][0];
-
-      if (email != user.email) {
-        return false;
-      }
-
-      const updateResult = await client.query(
-        `UPDATE transactions
-        SET tip_amount = $1::FLOAT8::NUMERIC::MONEY
-        WHERE id = $2`,
-        [value, id]
-      );
-
-      return updateResult.status === "UPDATE 1";
+      const updateResult = await sql`UPDATE transactions
+        SET tip_amount = ${value}::FLOAT8::NUMERIC::MONEY
+        WHERE id = ${id}`;
+      return true;
     } catch (e) {
       console.log("Error updating tip on database", e);
       return false;
@@ -251,11 +174,8 @@ export const utils = {
   //Status: done, testing needed
   addVehicle: async (id: number, cost2Own: number, make: string, model: string, year: number) => {
     try {
-      const result = await client.query(
-      `INSERT INTO vehicles (profile_id, cost_to_own, make, nodel, year)
-      VALUES ($1::BIGINT, $2::FLOAT8::NUMERIC::MONEY, $3, $4, $5::INT)`,
-      [id, cost2Own, make, model, year]
-      );
+      const result = await sql`INSERT INTO vehicles (profile_id, cost_to_own, make, nodel, year)
+      VALUES (${id}::BIGINT, ${cost2Own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)`;
 
       return true;
     } catch (e) {
@@ -267,16 +187,14 @@ export const utils = {
   //Status: done, testing needed
   getVehicle: async(id: number) => {
     try {
-      const vehicleResult = await client.query(
-        `SELECT * FROM vehicles
-        WHERE profile_id = $1`,
-        [id]
-      );
+      const vehicleResult = await sql`SELECT * FROM vehicles
+        WHERE profile_id = ${id}`;
 
-      if (vehicleResult.status === "SELECT 0") {
+      if (vehicleResult.length == 0) {
         return null;
       }
 
+      /*
       let cost_to_own: number[] = [];
       let make: string[] = [];
       let model: string[] = [];
@@ -307,9 +225,9 @@ export const utils = {
         make: make,
         model: model,
         year: year,
-      };
+      };*/
 
-      return vehicle;
+      return vehicleResult;
     } catch(e) {
       console.log("Error getting vehicle from database", e);
       return null;
@@ -319,13 +237,10 @@ export const utils = {
   //Status: done, testing needed
   deleteVehicle: async(id: number) => {
     try {
-      const deleteResult = await client.query(
-        `DELETE FROM vehicles
-        WHERE vehicle_id = $1`,
-        [id]
-      );
+      const deleteResult = await sql`DELETE FROM vehicles
+        WHERE vehicle_id = ${id}`;
 
-      return deleteResult.status === "DELETE 1";
+      return true;
     } catch(e) {
       console.log("Error deleting vehicle from database", e);
       return false;
@@ -339,42 +254,30 @@ export const utils = {
 
       switch (mode) {
         case VehiclePatchMode.cost_to_own:
-          updateResult = await client.query(
-            `UPDATE vehicles
-            SET cost_to_own = $1::FLOAT8::NUMERIC::MONEY
-            WHERE vehicle_id = $2`,
-            [value, id]
-          );
+          updateResult = await sql`UPDATE vehicles
+            SET cost_to_own = ${value}::FLOAT8::NUMERIC::MONEY
+            WHERE vehicle_id = ${id}`;
           break;
         case VehiclePatchMode.make:
-          updateResult = await client.query(
-            `UPDATE vehicles
-            SET make = $1
-            WHERE vehicle_id = $2`,
-            [value, id]
-          );
+          updateResult = await sql`UPDATE vehicles
+            SET make = ${value}
+            WHERE vehicle_id = ${id}`;
           break;
         case VehiclePatchMode.model:
-          updateResult = await client.query(
-            `UPDATE vehicles
-            SET model = $1
-            WHERE vehicle_id = $2`,
-            [value, id]
-          );
+          updateResult = await sql`UPDATE vehicles
+            SET model = ${value}
+            WHERE vehicle_id = ${id}`;
           break;
         case VehiclePatchMode.year:
-          updateResult = await client.query(
-            `UPDATE vehicles
-            SET make = $1::INT
-            WHERE vehicel_id = $2`,
-            [value, id]
-          );
+          updateResult = await sql`UPDATE vehicles
+            SET make = ${value}::INT
+            WHERE vehicel_id = ${id}`;
           break;
         default:
           return false;
       }
 
-      return updateResult.status === "UPDATE 1";
+      return true;
 
     } catch(e) {
       console.log("Error patching vehicle in database", e);
@@ -385,13 +288,10 @@ export const utils = {
   //Status: done, testing needed
   addLocation: async(address1: string, address2: string, city: string, state: string, zip_code: string) => {
     try {
-      const result = await client.query(
-        `INSERT INTO locations (address1, address2, city, state, zip_code)
-        VALUES ($1, $2, $3, $4, $5)`,
-        [address1, address2, city, state, zip_code]
-      );
+      const result = await sql`INSERT INTO locations (address1, address2, city, state, zip_code)
+        VALUES (${address1}, ${address2}, ${city}, ${state}, ${zip_code})`;
 
-      return result.status === "INSERT 1"
+      return true;
     } catch(e) {
       console.log("Error adding location to database", e);
       return false;
@@ -401,16 +301,13 @@ export const utils = {
   //TODO: apply different search modes?
   getLocation: async(id: number) => {
     try {
-      const locationResult = await client.query(
-        `SELECT * FROM locations
-        WHERE location_id = $1`,
-        [id]
-      );
+      const locationResult = await sql`SELECT * FROM locations
+        WHERE location_id = ${id}`;
 
-      if (locationResult.status === "SELECT 0") {
+      if (locationResult.length == 0) {
         return null;
       }
-
+      /*
       let address1: string[] = [];
       let address2: string[] = [];
       let city: string[] = [];
@@ -446,9 +343,9 @@ export const utils = {
         city: city,
         state: state,
         zip_code: zip_code,
-      };
+      };*/
 
-      return locations;
+      return locationResult;
     } catch(e) {
       console.log("Error getting location", e);
       return null;
@@ -459,13 +356,10 @@ export const utils = {
   // In what situations should a location be deleted?
   deleteLocation: async(id: number) => {
     try {
-      const deleteResult = await client.query(
-        `DELETE FROM locations
-        WHERE location_id = $1`,
-        [id]
-      );
+      const deleteResult = await sql`DELETE FROM locations
+        WHERE location_id = ${id}`;
 
-      return deleteResult.status === "DELETE 1";
+      return true;
     } catch(e) {
       console.log("Error deleting location from database", e);
       return false;
@@ -480,50 +374,35 @@ export const utils = {
 
       switch(mode) {
         case LocationPatchMode.address1:
-          updateResult = await client.query(
-            `UPDATE locations
-            SET address1 = $1
-            WHERE location_id = $2`,
-            [id, value]
-          );
+          updateResult = await sql`UPDATE locations
+            SET address1 = ${id}
+            WHERE location_id = ${value}`;
           break;
         case LocationPatchMode.address2:
-          updateResult = await client.query(
-            `UPDATE locations
-            SET address2 = $1
-            WHERE location_id = $2`,
-            [id, value]
-          );
+          updateResult = await sql`UPDATE locations
+            SET address2 = ${id}
+            WHERE location_id = ${value}`;
           break;
         case LocationPatchMode.city:
-          updateResult = await client.query(
-            `UPDATE locations
-            SET city = $1
-            WHERE location_id = $2`,
-            [id, value]
-          );
+          updateResult = await sql`UPDATE locations
+            SET city = ${id}
+            WHERE location_id = ${value}`;
           break;
         case LocationPatchMode.state:
-          updateResult = await client.query(
-            `UPDATE locations
-            SET state = $1
-            WHERE location_id = $2`,
-            [id, value]
-          );
+          updateResult = await sql`UPDATE locations
+            SET state = ${id}
+            WHERE location_id = ${value}`;
           break;
         case LocationPatchMode.zip_code:
-          updateResult = await client.query(
-            `UPDATE locations
-            SET zip_code = $1
-            WHERE location_id = $2`,
-            [id, value]
-          );
+          updateResult = await sql`UPDATE locations
+            SET zip_code = ${id}
+            WHERE location_id = ${value}`;
           break;
         default:
           return false;
       }
 
-      return updateResult.status === "UPDATE 1";
+      return true;
     } catch(e) {
       console.log("Error updating location", e);
       return false;

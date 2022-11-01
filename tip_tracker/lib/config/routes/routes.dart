@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:tip_tracker/modules/index/index_screen.dart';
 import 'package:tip_tracker/core/auth/auth_index_screen.dart';
 import 'package:tip_tracker/core/auth/login/login_screen.dart';
 import 'package:tip_tracker/core/auth/registration/registration_screen.dart';
-import 'package:tip_tracker/modules/widgets/splashscreen.dart';
+import 'package:tip_tracker/modules/index/index_screen.dart';
+import 'package:tip_tracker/modules/splash/splash_screen.dart';
 
 class Routes {
   static String indexScreen = "/";
@@ -14,11 +16,8 @@ class Routes {
 
   static Map<String, WidgetBuilder> buildRoutes() {
     return {
-      // Account
+      // AUTHENTICATION
       splashScreen: (BuildContext context) => const SplashScreen(),
-
-      // Auth
-
       loginScreen: (BuildContext context) => const LoginScreen(),
       registerScreen: (BuildContext context) => const RegistrationScreen(),
       authIndexScreen: (BuildContext context) => const AuthIndexScreen(),
@@ -26,7 +25,7 @@ class Routes {
       //     ForgotPassword(),
 
       // Modules
-      // indexScreen: (BuildContext context) => const IndexScreen(),
+      indexScreen: (BuildContext context) => const IndexScreen(),
       // userScreen: (BuildContext context) => const UserProfileScreen(),
     };
   }
