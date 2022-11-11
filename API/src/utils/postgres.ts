@@ -14,23 +14,14 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
   console.log("MISSING POSTGRES CREDENTIALS");
   process.exit(0);
 }
-/*
-const client = new Client({
-  user: POSTGRES_USER,
-  host: POSTGRES_HOST,
-  database: "tipmate",
-  password: POSTGRES_PASSWORD,
-  port: 5432,
-  ssl: true,
-});*/
 
 const sql = postgres({
-  host : POSTGRES_HOST,
-  port : 5432,
-  database : "tipmate",
-  username : POSTGRES_USER,
-  password : POSTGRES_PASSWORD,
-  ssl: true,
+  host      : POSTGRES_HOST,
+  port      : 5432,
+  database  : "tipmate",
+  username  : POSTGRES_USER,
+  password  : POSTGRES_PASSWORD,
+  ssl       : true,
 });
 
 export const utils = {
@@ -71,7 +62,7 @@ export const utils = {
   },
   onboarding: async (profile: ProfileReqBody) => {
     try {
-      await sql`insert into profile (employee_type, hours_per_week, work_address, wage, user_id, last_modified)
+      await sql`insert into profiles (employee_type, hours_per_week, work_address, wage, user_id, last_modified)
          values (${profile.employeeType}, ${profile.hoursPerWeek ?? null}, ${
         profile.workAddress ?? null
       }, ${profile.wage}, ${profile.userId}, current_timestamp)`;
@@ -140,7 +131,6 @@ export const utils = {
       if (histResult.length == 0) {
         return null;
       }
-      console.log(histResult);
       return histResult;
     } catch (e) {
       console.log("Error adding tip to database", e);
@@ -171,11 +161,10 @@ export const utils = {
     }
   },
 
-  //Status: done, testing needed
-  addVehicle: async (id: number, cost2Own: number, make: string, model: string, year: number) => {
+  addVehicle: async (profile_id: number, cost2Own: number, make: string, model: string, year: number) => {
     try {
-      const result = await sql`INSERT INTO vehicles (profile_id, cost_to_own, make, nodel, year)
-      VALUES (${id}::BIGINT, ${cost2Own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)`;
+      const result = await sql`INSERT INTO vehicles (profile_id, cost_to_own, make, model, year)
+      VALUES (${profile_id}::BIGINT, ${cost2Own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)`;
 
       return true;
     } catch (e) {
@@ -184,48 +173,14 @@ export const utils = {
     }
   },
 
-  //Status: done, testing needed
-  getVehicle: async(id: number) => {
+  getVehicle: async(profile_id: number) => {
     try {
       const vehicleResult = await sql`SELECT * FROM vehicles
-        WHERE profile_id = ${id}`;
+        WHERE profile_id = ${profile_id}`;
 
       if (vehicleResult.length == 0) {
         return null;
       }
-
-      /*
-      let cost_to_own: number[] = [];
-      let make: string[] = [];
-      let model: string[] = [];
-      let year: number[] = [];
-
-      for (let i = 0; i < vehicleResult.rows.length; ++i) {
-        for (let j = 0; j < vehicleResult.rows[0].length; ++j) {
-          switch (j) {
-            case 0:
-              cost_to_own.push(+(""+vehicleResult.rows[i][j]));
-              break;
-            case 1:
-              make.push(""+vehicleResult.rows[i][j]);
-              break;
-            case 2:
-              model.push(""+vehicleResult.rows[i][j]);
-              break;
-            case 3:
-              year.push(+(""+vehicleResult.rows[i][j]));
-              break;
-            default:
-          }
-        }
-      }
-
-      let vehicle = {
-        cost_to_own: cost_to_own,
-        make: make,
-        model: model,
-        year: year,
-      };*/
 
       return vehicleResult;
     } catch(e) {
@@ -234,11 +189,10 @@ export const utils = {
     }
   },
 
-  //Status: done, testing needed
-  deleteVehicle: async(id: number) => {
+  deleteVehicle: async(vehicle_id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM vehicles
-        WHERE vehicle_id = ${id}`;
+        WHERE vehicle_id = ${vehicle_id}`;
 
       return true;
     } catch(e) {
@@ -247,8 +201,7 @@ export const utils = {
     }
   },
 
-  //Status: done, testing needed
-  patchVehicle: async(mode: VehiclePatchMode, id: number, value: string) => {
+  patchVehicle: async(mode: VehiclePatchMode, vehicle_id: number, value: string) => {
     try {
       let updateResult = null;
 
@@ -256,22 +209,22 @@ export const utils = {
         case VehiclePatchMode.cost_to_own:
           updateResult = await sql`UPDATE vehicles
             SET cost_to_own = ${value}::FLOAT8::NUMERIC::MONEY
-            WHERE vehicle_id = ${id}`;
+            WHERE vehicle_id = ${vehicle_id}`;
           break;
         case VehiclePatchMode.make:
           updateResult = await sql`UPDATE vehicles
             SET make = ${value}
-            WHERE vehicle_id = ${id}`;
+            WHERE vehicle_id = ${vehicle_id}`;
           break;
         case VehiclePatchMode.model:
           updateResult = await sql`UPDATE vehicles
             SET model = ${value}
-            WHERE vehicle_id = ${id}`;
+            WHERE vehicle_id = ${vehicle_id}`;
           break;
         case VehiclePatchMode.year:
           updateResult = await sql`UPDATE vehicles
-            SET make = ${value}::INT
-            WHERE vehicel_id = ${id}`;
+            SET year = ${value}::INT
+            WHERE vehicle_id = ${vehicle_id}`;
           break;
         default:
           return false;
@@ -285,10 +238,9 @@ export const utils = {
     }
   },
 
-  //Status: done, testing needed
   addLocation: async(address1: string, address2: string, city: string, state: string, zip_code: string) => {
     try {
-      const result = await sql`INSERT INTO locations (address1, address2, city, state, zip_code)
+      const result = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code)
         VALUES (${address1}, ${address2}, ${city}, ${state}, ${zip_code})`;
 
       return true;
@@ -299,51 +251,14 @@ export const utils = {
   },
 
   //TODO: apply different search modes?
-  getLocation: async(id: number) => {
+  getLocation: async(location_id: number) => {
     try {
       const locationResult = await sql`SELECT * FROM locations
-        WHERE location_id = ${id}`;
+        WHERE location_id = ${location_id}`;
 
       if (locationResult.length == 0) {
         return null;
       }
-      /*
-      let address1: string[] = [];
-      let address2: string[] = [];
-      let city: string[] = [];
-      let state: string[] = [];
-      let zip_code: string[] = [];
-
-      for (let i = 0; i < locationResult.rows.length; ++i) {
-        for (let j = 0; j < locationResult.rows[0].length; ++j) {
-          switch (j) {
-            case 0:
-              address1.push(""+locationResult.rows[i][j]);
-              break;
-            case 1:
-              address2.push(""+locationResult.rows[i][j]);
-              break;
-            case 2:
-              city.push(""+locationResult.rows[i][j]);
-              break;
-            case 3:
-              state.push(""+locationResult.rows[i][j]);
-              break;
-            case 4:
-              zip_code.push(""+locationResult.rows[i][j]);
-              break;
-            default:
-          }
-        }
-      }
-
-      let locations = {
-        adress1: address1,
-        address2: address2,
-        city: city,
-        state: state,
-        zip_code: zip_code,
-      };*/
 
       return locationResult;
     } catch(e) {
@@ -352,12 +267,11 @@ export const utils = {
     }
   },
 
-  //Status: done, testing needed
   // In what situations should a location be deleted?
-  deleteLocation: async(id: number) => {
+  deleteLocation: async(location_id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM locations
-        WHERE location_id = ${id}`;
+        WHERE location_id = ${location_id}`;
 
       return true;
     } catch(e) {
@@ -366,37 +280,36 @@ export const utils = {
     }
   },
 
-  //Status: done, testing needed
   // In what situations should a location be updated?
-  patchLocation: async(mode: LocationPatchMode, id: number, value: string) => {
+  patchLocation: async(mode: LocationPatchMode, location_id: number, value: string) => {
     try {
       let updateResult = null;
 
       switch(mode) {
         case LocationPatchMode.address1:
           updateResult = await sql`UPDATE locations
-            SET address1 = ${id}
-            WHERE location_id = ${value}`;
+            SET address_1 = ${value}
+            WHERE location_id = ${location_id}`;
           break;
         case LocationPatchMode.address2:
           updateResult = await sql`UPDATE locations
-            SET address2 = ${id}
-            WHERE location_id = ${value}`;
+            SET address_2 = ${value}
+            WHERE location_id = ${location_id}`;
           break;
         case LocationPatchMode.city:
           updateResult = await sql`UPDATE locations
-            SET city = ${id}
-            WHERE location_id = ${value}`;
+            SET city = ${value}
+            WHERE location_id = ${location_id}`;
           break;
         case LocationPatchMode.state:
           updateResult = await sql`UPDATE locations
-            SET state = ${id}
-            WHERE location_id = ${value}`;
+            SET state = ${value}
+            WHERE location_id = ${location_id}`;
           break;
         case LocationPatchMode.zip_code:
           updateResult = await sql`UPDATE locations
-            SET zip_code = ${id}
-            WHERE location_id = ${value}`;
+            SET zip_code = ${value}
+            WHERE location_id = ${location_id}`;
           break;
         default:
           return false;

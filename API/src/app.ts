@@ -7,6 +7,7 @@ import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
 import * as jwt from "jsonwebtoken";
 import { verifyJWT } from "./utils/jwt";
+import { compareSync } from "bcrypt";
 var format = require("date-fns/format");
 
 const app = express();
@@ -29,6 +30,8 @@ if (REFRESH_JWT_SECRET === "") {
 app.post("/register", async (req, res) => {
   try {
   const body: AuthRequestBody = req.body;
+
+  // TODO: add check for email in DB
 
   await utils.registerUser(body);
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
@@ -76,7 +79,7 @@ app.get("/verify_token", verifyJWT, async (req, res) => {
 }
 })
 
-app.post("/tip", verifyJWT, async (req, res) => {
+app.post("/transaction", verifyJWT, async (req, res) => {
   const body: AuthRequestBody = req.body;
   const params: Query = req.query;
   let amount: string = "" + params.amount;
@@ -90,7 +93,7 @@ app.post("/tip", verifyJWT, async (req, res) => {
   res.sendStatus(200);
 });
 
-app.get("/tip", async (req, res) => {
+app.get("/transaction", async (req, res) => {
   try {
     const body: AuthRequestBody = req.body;
     const params: Query = req.query;
@@ -110,7 +113,7 @@ app.get("/tip", async (req, res) => {
   }
 });
 
-app.delete("/tip", verifyJWT, async (req, res) => {
+app.delete("/transaction", verifyJWT, async (req, res) => {
   try {
     const body: AuthRequestBody = req.body;
     const params: Query = req.query;
@@ -129,7 +132,7 @@ app.delete("/tip", verifyJWT, async (req, res) => {
   }
 });
 
-app.patch("/tip", verifyJWT, async (req, res) => {
+app.patch("/transaction", verifyJWT, async (req, res) => {
   try {
     const body: AuthRequestBody = req.body;
     const params: Query = req.query;
@@ -187,13 +190,13 @@ app.put("/profile/:userId", async (req, res) => {
 app.post("/vehicle", verifyJWT, async(req, res) => {
   const params: Query = req.query;
 
-  let id: number = +(""+params.id);
-  let cost2Own: number = +(""+params.cost);
+  let profile_id: number = +(""+params.profile_id);
+  let cost2Own: number = +(""+params.cost_to_own);
   let make: string = "" + params.make;
   let model: string = "" + params.model;
   let year: number = +(""+params.year);
 
-  let result = await utils.addVehicle(id, cost2Own, make, model, year);
+  let result = await utils.addVehicle(profile_id, cost2Own, make, model, year);
 
   if (!result) {
     res.sendStatus(400);
@@ -204,9 +207,9 @@ app.post("/vehicle", verifyJWT, async(req, res) => {
 
 app.get("/vehicle", async(req, res) => {
   const params: Query = req.query;
-  let id: number = +(""+params.id);
+  let profile_id: number = +(""+params.profile_id);
   
-  let result = await utils.getVehicle(id);
+  let result = await utils.getVehicle(profile_id);
 
   if (!result) {
     res.sendStatus(400);
@@ -218,9 +221,9 @@ app.get("/vehicle", async(req, res) => {
 
 app.delete("/vehicle", verifyJWT, async(req, res) => {
   const params: Query = req.query;
-  let id: number = +(""+params.id);
+  let vehicle_id: number = +(""+params.vehicle_id);
 
-  let result = await utils.deleteVehicle(id);
+  let result = await utils.deleteVehicle(vehicle_id);
 
   if (!result) {
     res.sendStatus(400);
@@ -232,10 +235,10 @@ app.delete("/vehicle", verifyJWT, async(req, res) => {
 app.patch("/vehicle", verifyJWT, async(req, res) => {
   const params: Query = req.query;
   let mode: VehiclePatchMode = +(""+params.mode);
-  let id: number = +(""+params.id);
+  let vehicle_id: number = +(""+params.vehicle_id);
   let value: string = ""+params.value;
 
-  let result = await utils.patchVehicle(mode, id, value);
+  let result = await utils.patchVehicle(mode, vehicle_id, value);
 
   if (!result) {
     res.sendStatus(400);
@@ -247,8 +250,8 @@ app.patch("/vehicle", verifyJWT, async(req, res) => {
 app.post("/location", verifyJWT, async(req, res) => {
   const params: Query = req.query;
 
-  let address1: string = ""+params.address1;
-  let address2: string = ""+params.address2;
+  let address1: string = ""+params.address_1;
+  let address2: string = ""+params.address_2;
   let city: string = ""+params.city;
   let state: string = ""+params.state;
   let zip_code: string = ""+params.zip_code;
@@ -264,9 +267,9 @@ app.post("/location", verifyJWT, async(req, res) => {
 
 app.get("/location", async(req, res) => {
   const params: Query = req.query;
-  let id: number = +(""+params.id);
+  let location_id: number = +(""+params.location_id);
 
-  let result = await utils.getLocation(id);
+  let result = await utils.getLocation(location_id);
 
   if (!result) {
     res.sendStatus(400);
@@ -278,9 +281,9 @@ app.get("/location", async(req, res) => {
 
 app.delete("/location", verifyJWT, async(req, res) => {
   const params: Query = req.query;
-  let id: number = +(""+params.id);
+  let location_id: number = +(""+params.location_id);
 
-  let result = await utils.deleteLocation(id);
+  let result = await utils.deleteLocation(location_id);
 
   if (!result) {
     res.sendStatus(400);
@@ -292,10 +295,10 @@ app.delete("/location", verifyJWT, async(req, res) => {
 app.patch("/location", verifyJWT, async(req, res) => {
   const params: Query = req.query;
   let mode: LocationPatchMode = +(""+params.mode);
-  let id: number = +(""+params.id);
+  let location_id: number = +(""+params.location_id);
   let value: string = ""+params.value;
 
-  let result = await utils.patchLocation(mode, id, value);
+  let result = await utils.patchLocation(mode, location_id, value);
 
   if (!result) {
     res.sendStatus(400);
