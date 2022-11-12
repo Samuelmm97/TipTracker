@@ -31,9 +31,11 @@ app.post("/register", async (req, res) => {
   try {
   const body: AuthRequestBody = req.body;
 
-  // TODO: add check for email in DB
+  const result = await utils.registerUser(body);
+  if (result != null) {
+    throw result;
+  }
 
-  await utils.registerUser(body);
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
   const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
@@ -43,7 +45,7 @@ app.post("/register", async (req, res) => {
   res.status(201).send({message: "Registration successful"});
 } catch (error) {
   console.log(error);
-  res.status(500).send({message: error});
+  res.status(500).send({message: String(error)});
 }
 });
 

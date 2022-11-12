@@ -27,6 +27,12 @@ const sql = postgres({
 export const utils = {
   registerUser: async (user: AuthRequestBody) => {
     try {
+      const lookUp = await sql`SELECT id FROM accounts
+      WHERE email = ${user.email}`;
+      if (lookUp.count != 0) {
+        throw new Error("Email is already registered.");
+      }
+
       bcrypt.hash(user.password, saltRounds, async (err, hash: string) => {
         if (err) {
           console.log(err);
@@ -37,6 +43,8 @@ export const utils = {
           await sql`INSERT INTO accounts (email, password, created_on, last_login)
           VALUES (${user.email}, ${hash}, current_timestamp, current_timestamp)`;
       });
+
+      return null;
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
       return e;
