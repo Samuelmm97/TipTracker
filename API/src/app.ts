@@ -236,11 +236,10 @@ app.delete("/vehicle", verifyJWT, async(req, res) => {
 
 app.patch("/vehicle", verifyJWT, async(req, res) => {
   const params: Query = req.query;
-  let mode: VehiclePatchMode = +(""+params.mode);
+  const body = req.body;
   let vehicle_id: number = +(""+params.vehicle_id);
-  let value: string = ""+params.value;
 
-  let result = await utils.patchVehicle(mode, vehicle_id, value);
+  let result = await utils.patchVehicle(vehicle_id, body);
 
   if (!result) {
     res.sendStatus(400);
@@ -296,11 +295,10 @@ app.delete("/location", verifyJWT, async(req, res) => {
 
 app.patch("/location", verifyJWT, async(req, res) => {
   const params: Query = req.query;
-  let mode: LocationPatchMode = +(""+params.mode);
+  const body = req.body;
   let location_id: number = +(""+params.location_id);
-  let value: string = ""+params.value;
 
-  let result = await utils.patchLocation(mode, location_id, value);
+  let result = await utils.patchLocation(location_id, body);
 
   if (!result) {
     res.sendStatus(400);

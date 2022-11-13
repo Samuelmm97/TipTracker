@@ -209,38 +209,14 @@ export const utils = {
     }
   },
 
-  patchVehicle: async(mode: VehiclePatchMode, vehicle_id: number, value: string) => {
+  patchVehicle:async (vehicle_id: number, vehicle: any) => {
     try {
-      let updateResult = null;
-
-      switch (mode) {
-        case VehiclePatchMode.cost_to_own:
-          updateResult = await sql`UPDATE vehicles
-            SET cost_to_own = ${value}::FLOAT8::NUMERIC::MONEY
-            WHERE vehicle_id = ${vehicle_id}`;
-          break;
-        case VehiclePatchMode.make:
-          updateResult = await sql`UPDATE vehicles
-            SET make = ${value}
-            WHERE vehicle_id = ${vehicle_id}`;
-          break;
-        case VehiclePatchMode.model:
-          updateResult = await sql`UPDATE vehicles
-            SET model = ${value}
-            WHERE vehicle_id = ${vehicle_id}`;
-          break;
-        case VehiclePatchMode.year:
-          updateResult = await sql`UPDATE vehicles
-            SET year = ${value}::INT
-            WHERE vehicle_id = ${vehicle_id}`;
-          break;
-        default:
-          return false;
-      }
+      const result = await sql`UPDATE vehicles
+        SET ${sql(vehicle)}
+        WHERE vehicle_id = ${vehicle_id}`;
 
       return true;
-
-    } catch(e) {
+    } catch (e) {
       console.log("Error patching vehicle in database", e);
       return false;
     }
@@ -288,44 +264,15 @@ export const utils = {
     }
   },
 
-  // In what situations should a location be updated?
-  patchLocation: async(mode: LocationPatchMode, location_id: number, value: string) => {
+  patchLocation: async(location_id: number, location: any) => {
     try {
-      let updateResult = null;
-
-      switch(mode) {
-        case LocationPatchMode.address1:
-          updateResult = await sql`UPDATE locations
-            SET address_1 = ${value}
-            WHERE location_id = ${location_id}`;
-          break;
-        case LocationPatchMode.address2:
-          updateResult = await sql`UPDATE locations
-            SET address_2 = ${value}
-            WHERE location_id = ${location_id}`;
-          break;
-        case LocationPatchMode.city:
-          updateResult = await sql`UPDATE locations
-            SET city = ${value}
-            WHERE location_id = ${location_id}`;
-          break;
-        case LocationPatchMode.state:
-          updateResult = await sql`UPDATE locations
-            SET state = ${value}
-            WHERE location_id = ${location_id}`;
-          break;
-        case LocationPatchMode.zip_code:
-          updateResult = await sql`UPDATE locations
-            SET zip_code = ${value}
-            WHERE location_id = ${location_id}`;
-          break;
-        default:
-          return false;
-      }
+      const updateResult = await sql`UPDATE locations
+      SET ${sql(location)}
+      WHERE location_id = ${location_id}`;
 
       return true;
     } catch(e) {
-      console.log("Error updating location", e);
+      console.log("Error patching location in database", e);
       return false;
     }
   },
