@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import { AuthRequestBody, ProfileReqBody } from "../models/models";
+import { AuthRequestBody, Profile, ProfileReqBody } from "../models/models";
 import bcrypt from "bcrypt";
 // import { Result } from "ts-postgres/dist/src/result";
 
@@ -14,12 +14,12 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
   process.exit(0);
 }
 
-const client = new Client({
-  user: POSTGRES_USER,
+const sql = postgres({
   host: POSTGRES_HOST,
-  database: "tipmate",
-  password: POSTGRES_PASSWORD,
   port: 5432,
+  database: "tipmate",
+  username: POSTGRES_USER,
+  password: POSTGRES_PASSWORD,
   ssl: true,
 });
 
@@ -82,7 +82,7 @@ export const utils = {
       return false;
     }
   },
-  updateProfile: async (userId: string, profile: any) => {
+  updateProfile: async (userId: string, profile: Profile) => {
     try {
       const result = await sql`update profile
                               set ${sql(profile)},
