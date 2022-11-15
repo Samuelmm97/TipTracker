@@ -7,13 +7,14 @@ import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
 import * as jwt from "jsonwebtoken";
 import { verifyJWT } from "./utils/jwt";
+import { email } from "./utils/email";
 import { compareSync } from "bcrypt";
 var format = require("date-fns/format");
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-const port = 3000;
+const port = process.env.PORT ?? 3000;
 const JWT_SECRET: string = process.env.JWT_SECRET ?? "";
 const REFRESH_JWT_SECRET: string = process.env.REFRESH_JWT_SECRET ?? "";
 
@@ -32,9 +33,13 @@ app.post("/register", async (req, res) => {
   const body: AuthRequestBody = req.body;
 
   const result = await utils.registerUser(body);
-  if (result != null) {
+  if (typeof result !== "number") {
+    console.log(typeof result);
     throw result;
   }
+  
+  let user_id = result;
+  const mail = await email.sendVerification(body.email, user_id, String(port));
 
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
   const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
@@ -47,6 +52,19 @@ app.post("/register", async (req, res) => {
   console.log(error);
   res.status(500).send({message: String(error)});
 }
+});
+
+app.get("/verify/:user_id", async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const result = utils.verify(+user_id);
+
+    res.status(200).send("Account verified!");
+  } catch(e) {
+    console.log(e);
+    res.status(500).send("Couldn't verify account :(");
+  }
 });
 
 app.post("/login", async (req, res) => {
@@ -204,7 +222,7 @@ app.post("/vehicle", verifyJWT, async(req, res) => {
     res.sendStatus(400);
     return;
   }
-  res.sendStatus(200);
+  res.send(result);
 });
 
 app.get("/vehicle", async(req, res) => {
@@ -263,7 +281,7 @@ app.post("/location", verifyJWT, async(req, res) => {
     res.sendStatus(400);
     return;
   }
-  res.sendStatus(200);
+  res.send(result);
 });
 
 app.get("/location", async(req, res) => {

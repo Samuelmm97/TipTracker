@@ -18,11 +18,20 @@ export type Metric = {
 };
 
 export interface ProfileReqBody {
+  email: string,
   employeeType: "mobile" | "stationary";
   hoursPerWeek?: number; // if stationary
-  workAddress?: string; // if statiionary
+  workAddress?: Address; // if statiionary
   wage: number;
   userId: string;
+}
+
+export interface Address {
+  address1: string;
+  address2: string; 
+  city: string;
+  state: string;
+  zip_code: string;
 }
 
 export class Profile {

@@ -18,7 +18,8 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
 const sql = postgres({
   host      : POSTGRES_HOST,
   port      : 5432,
-  database  : "tipmate",
+  database  : "refactored",
+  //database  : "tipmate", 
   username  : POSTGRES_USER,
   password  : POSTGRES_PASSWORD,
   ssl       : true,
@@ -33,23 +34,44 @@ export const utils = {
         throw new Error("Email is already registered.");
       }
 
+      const create = await sql`INSERT INTO accounts (email, password, created_on, last_login, verified)
+      VALUES (${user.email}, ${""}, current_timestamp, current_timestamp, FALSE)
+      RETURNING id`;
+
+      let user_id = create[0].id;
+
       bcrypt.hash(user.password, saltRounds, async (err, hash: string) => {
         if (err) {
           console.log(err);
           return err;
         }
 
-        const result =
-          await sql`INSERT INTO accounts (email, password, created_on, last_login)
-          VALUES (${user.email}, ${hash}, current_timestamp, current_timestamp)`;
+        const update =
+          await sql`UPDATE accounts
+          SET password = ${hash}
+          WHERE id = ${user_id}`;
       });
 
-      return null;
+      return +user_id;
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
       return e;
     }
   },
+
+  verify: async(user_id: number) => {
+    try {
+      const result = await sql`UPDATE accounts
+      set verified = TRUE
+      WHERE id = ${user_id}`;
+
+      return true;
+    } catch(e) {
+      console.log("Error veryfing account", e);
+      return false;
+    }  
+  },
+
   login: async (user: AuthRequestBody) => {
     try {
       const result = await sql`SELECT password FROM accounts
@@ -70,11 +92,28 @@ export const utils = {
   },
   onboarding: async (profile: ProfileReqBody) => {
     try {
-      await sql`insert into profiles (employee_type, hours_per_week, work_address, wage, user_id, last_modified)
-         values (${profile.employeeType}, ${profile.hoursPerWeek ?? null}, ${
-        profile.workAddress ?? null
-      }, ${profile.wage}, ${profile.userId}, current_timestamp)`;
+      let location_id = null;
+      if (profile.workAddress != null) {
+        let a = profile.workAddress;
+        const insLocation = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code)
+        VALUES (${a.address1}, ${a.address2}, ${a.city}, ${a.state}, ${a.zip_code})
+        RETURNING location_id`;
 
+        location_id = insLocation[0].location_id;
+      }
+
+      const insert = await sql`insert into profiles (employee_type, hours_per_week, work_location, fixed_wage, user_id, last_modified)
+        values (${profile.employeeType}, ${profile.hoursPerWeek ?? null}, 
+        ${location_id}, ${profile.wage}, ${profile.userId}, current_timestamp)
+        RETURNING profile_id`;
+      
+      console.log(insert);
+      let profile_id = insert[0].profile_id;
+      
+
+      const update = await sql`update accounts
+        set profile_id = ${profile_id}
+        WHERE id = ${profile.userId}`;
       return true;
     } catch (e) {
       console.log("Error onboarding postgres", e);
@@ -104,6 +143,22 @@ export const utils = {
     }
   },
 
+  getAccount: async(user: AuthRequestBody) => {
+    try {
+      const result = await sql`SELECT * from accounts
+      WHERE email = ${user.email}`;
+
+      if (result.length == 0) {
+        return null;
+      }
+
+      return result[0];
+    } catch(e) {
+      console.log("Error getting account from database", e);
+      return null;
+    }
+  },
+
   addTip: async (user: AuthRequestBody, amount: string) => {
     try {
       const idResult = await sql`SELECT id FROM accounts
@@ -113,7 +168,7 @@ export const utils = {
         return false;
       }
 
-      let id: number = +("" + idResult[0].id);
+      let id: number = +(""+idResult[0].id);
 
       const tipResult =
         await sql`INSERT INTO transactions (tip_amount, user_id, tip_date) 
@@ -141,7 +196,7 @@ export const utils = {
       }
       return histResult;
     } catch (e) {
-      console.log("Error adding tip to database", e);
+      console.log("Error getting tips from database", e);
       return null;
     }
   },
@@ -172,12 +227,13 @@ export const utils = {
   addVehicle: async (profile_id: number, cost2Own: number, make: string, model: string, year: number) => {
     try {
       const result = await sql`INSERT INTO vehicles (profile_id, cost_to_own, make, model, year)
-      VALUES (${profile_id}::BIGINT, ${cost2Own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)`;
+      VALUES (${profile_id}::BIGINT, ${cost2Own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)
+      RETURNING vehicle_id`;
 
-      return true;
+      return result[0].vehicle_id;
     } catch (e) {
       console.log("Error adding car to database", e);
-      return false;
+      return null;
     }
   },
 
@@ -225,12 +281,13 @@ export const utils = {
   addLocation: async(address1: string, address2: string, city: string, state: string, zip_code: string) => {
     try {
       const result = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code)
-        VALUES (${address1}, ${address2}, ${city}, ${state}, ${zip_code})`;
+        VALUES (${address1}, ${address2}, ${city}, ${state}, ${zip_code})
+        RETURNING location_id`;
 
-      return true;
+      return result[0].location_id;
     } catch(e) {
       console.log("Error adding location to database", e);
-      return false;
+      return null;
     }
   },
 
