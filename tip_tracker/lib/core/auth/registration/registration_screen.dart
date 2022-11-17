@@ -155,7 +155,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             bool loginSuccess =
                                 await BlocProvider.of<RegistrationCubit>(
                                         context)
-                                    .registerUser();
+                                    .register();
                             // Do not use BuildContexts across async gaps (don't route without checking if this state is in the tree): https://www.flutteroverflow.dev/use-build-context-synchronously/
                             if (!mounted) return;
                             if (loginSuccess) {
