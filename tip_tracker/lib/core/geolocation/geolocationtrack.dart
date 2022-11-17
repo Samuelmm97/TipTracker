@@ -63,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-    
+
       body: Center(
         child: _position != null ? Text('Current Location: ' + _position.toString()) : Text('No Location Data'),
       ),
@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _getCurrentLocation,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 }
