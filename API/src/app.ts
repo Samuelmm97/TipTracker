@@ -68,7 +68,7 @@ app.get("/verify/:user_id/:token", async (req, res) => {
     const { token } = req.params;
 
     const decoded = jwt.verify(token, EMAIL_SECRET);
-    const result = await utils.verify(+user_id);
+    const result = await utils.verifyUser(+user_id);
 
     res.status(200).send("Account successfully verified!");
   } catch(e) {

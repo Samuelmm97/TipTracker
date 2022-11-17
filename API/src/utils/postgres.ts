@@ -26,6 +26,22 @@ const sql = postgres({
 });
 
 export const utils = {
+  /**
+   * @function    :   registerUser()        
+   *   
+   * @brief   This function creates a new entry in the accounts database with the email and
+   *          password provided. Before making any inserts, it will check that the email 
+   *          provided hasn't been used for an already existing account, and will return an 
+   *          error if that's the case.
+   * 
+   * @param   user        AuthRequestBody    interface with an email string and a password string
+   * 
+   * @return  user_id  :  number  |  e  :  Error
+   * 
+   * @example
+   *      registerUser({ email: "example@example.com", password: "123SafePassword" });
+   *      await registerUser(user2);
+   */
   registerUser: async (user: AuthRequestBody) => {
     try {
       const lookUp = await sql`SELECT id FROM accounts
@@ -58,7 +74,22 @@ export const utils = {
     }
   },
 
-  verify: async(user_id: number) => {
+  /**
+   * @function    :   verifyUser()        
+   *   
+   * @brief   This function updates the 'verified' value in the accounts table in the database to
+   *          true for the user whose id is specified in user_id. Returns true if the update was
+   *          successful, and false if there was an error during the database query.
+   * 
+   * @param   user_id     number      id of user in accounts table in database
+   * 
+   * @return  Boolean
+   * 
+   * @example
+   *      verifyUser(1)
+   *      await verifyUser(90);
+   */
+  verifyUser: async(user_id: number) => {
     try {
       await sql`UPDATE accounts
       set verified = TRUE
@@ -99,6 +130,26 @@ export const utils = {
     }
   },
 
+  /**
+   * @function    :   onboarding()        
+   *   
+   * @brief   This function adds an entry to the profiles table in the database with the info
+   *          specified in 'profile'. If the workAddress component is specified, this function will
+   *          first create an entry in the locations table with the info in workAddress, and the 
+   *          location id obtained from said insertion will be entered into the work_location 
+   *          column in profiles. Then, the profile id obtained from inserting into profiles will
+   *          be entered as the profile_id corresponding to the user's record in the accounts table
+   *          in the database.
+   * 
+   * @param   profile      ProfileReqBody    interface with profile info*
+   *                                       * see '/API/src/models/models.ts'
+   * 
+   * @return  Boolean
+   * 
+   * @example
+   *      onboarding(profile1);
+   *      await onbparding(profile2);
+   */
   onboarding: async (profile: ProfileReqBody) => {
     try {
       let location_id = null;
@@ -116,11 +167,10 @@ export const utils = {
         ${location_id}, ${profile.wage}, ${profile.userId}, current_timestamp)
         RETURNING profile_id`;
       
-      //console.log(insert);
       let profile_id = insert[0].profile_id;
       
 
-      const update = await sql`update accounts
+      await sql`update accounts
         set profile_id = ${profile_id}
         WHERE id = ${profile.userId}`;
       return true;
