@@ -1,7 +1,7 @@
 import postgres from "postgres";
-import { Client, Query } from "ts-postgres";
-import { AuthRequestBody, ProfileReqBody } from "../models/models";
+import { AuthRequestBody, ProfileReqBody, VehiclePatchMode, LocationPatchMode } from "../models/models";
 import bcrypt from "bcrypt";
+import { add } from "date-fns";
 // import { Result } from "ts-postgres/dist/src/result";
 
 const saltRounds = 10;
@@ -16,17 +16,23 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
 }
 
 const sql = postgres({
-  user: POSTGRES_USER,
-  host: POSTGRES_HOST,
-  database: "tipmate",
-  password: POSTGRES_PASSWORD,
-  port: 5432,
-  ssl: true,
+  host      : POSTGRES_HOST,
+  port      : 5432,
+  database  : "tipmate",
+  username  : POSTGRES_USER,
+  password  : POSTGRES_PASSWORD,
+  ssl       : true,
 });
 
 export const utils = {
   registerUser: async (user: AuthRequestBody) => {
     try {
+      const lookUp = await sql`SELECT id FROM accounts
+      WHERE email = ${user.email}`;
+      if (lookUp.count != 0) {
+        throw new Error("Email is already registered.");
+      }
+
       bcrypt.hash(user.password, saltRounds, async (err, hash: string) => {
         if (err) {
           console.log(err);
@@ -37,6 +43,8 @@ export const utils = {
           await sql`INSERT INTO accounts (email, password, created_on, last_login)
           VALUES (${user.email}, ${hash}, current_timestamp, current_timestamp)`;
       });
+
+      return null;
     } catch (e) {
       console.log("Error inserting into accounts postgres", e);
       return e;
@@ -62,7 +70,7 @@ export const utils = {
   },
   onboarding: async (profile: ProfileReqBody) => {
     try {
-      await sql`insert into profile (employee_type, hours_per_week, work_address, wage, user_id, last_modified)
+      await sql`insert into profiles (employee_type, hours_per_week, work_address, wage, user_id, last_modified)
          values (${profile.employeeType}, ${profile.hoursPerWeek ?? null}, ${
         profile.workAddress ?? null
       }, ${profile.wage}, ${profile.userId}, current_timestamp)`;
@@ -131,7 +139,6 @@ export const utils = {
       if (histResult.length == 0) {
         return null;
       }
-      console.log(histResult);
       return histResult;
     } catch (e) {
       console.log("Error adding tip to database", e);
@@ -158,6 +165,114 @@ export const utils = {
       return true;
     } catch (e) {
       console.log("Error updating tip on database", e);
+      return false;
+    }
+  },
+
+  addVehicle: async (profile_id: number, cost2Own: number, make: string, model: string, year: number) => {
+    try {
+      const result = await sql`INSERT INTO vehicles (profile_id, cost_to_own, make, model, year)
+      VALUES (${profile_id}::BIGINT, ${cost2Own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)`;
+
+      return true;
+    } catch (e) {
+      console.log("Error adding car to database", e);
+      return false;
+    }
+  },
+
+  getVehicle: async(profile_id: number) => {
+    try {
+      const vehicleResult = await sql`SELECT * FROM vehicles
+        WHERE profile_id = ${profile_id}`;
+
+      if (vehicleResult.length == 0) {
+        return null;
+      }
+
+      return vehicleResult;
+    } catch(e) {
+      console.log("Error getting vehicle from database", e);
+      return null;
+    }
+  },
+
+  deleteVehicle: async(vehicle_id: number) => {
+    try {
+      const deleteResult = await sql`DELETE FROM vehicles
+        WHERE vehicle_id = ${vehicle_id}`;
+
+      return true;
+    } catch(e) {
+      console.log("Error deleting vehicle from database", e);
+      return false;
+    }
+  },
+
+  patchVehicle:async (vehicle_id: number, vehicle: any) => {
+    try {
+      const result = await sql`UPDATE vehicles
+        SET ${sql(vehicle)}
+        WHERE vehicle_id = ${vehicle_id}`;
+
+      return true;
+    } catch (e) {
+      console.log("Error patching vehicle in database", e);
+      return false;
+    }
+  },
+
+  addLocation: async(address1: string, address2: string, city: string, state: string, zip_code: string) => {
+    try {
+      const result = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code)
+        VALUES (${address1}, ${address2}, ${city}, ${state}, ${zip_code})`;
+
+      return true;
+    } catch(e) {
+      console.log("Error adding location to database", e);
+      return false;
+    }
+  },
+
+  //TODO: apply different search modes?
+  getLocation: async(location_id: number) => {
+    try {
+      const locationResult = await sql`SELECT * FROM locations
+        WHERE location_id = ${location_id}`;
+
+      if (locationResult.length == 0) {
+        return null;
+      }
+
+      return locationResult;
+    } catch(e) {
+      console.log("Error getting location", e);
+      return null;
+    }
+  },
+
+  // In what situations should a location be deleted?
+  deleteLocation: async(location_id: number) => {
+    try {
+      const deleteResult = await sql`DELETE FROM locations
+        WHERE location_id = ${location_id}`;
+
+      return true;
+    } catch(e) {
+      console.log("Error deleting location from database", e);
+      return false;
+    }
+  },
+
+  patchLocation: async(location_id: number, location: any) => {
+    try {
+      const updateResult = await sql`UPDATE locations
+      SET ${sql(location)}
+      WHERE location_id = ${location_id}`;
+
+      return true;
+    } catch(e) {
+      console.log("Error patching location in database", e);
       return false;
     }
   },
