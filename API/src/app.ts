@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import express from "express";
-import { AuthRequestBody, ProfileReqBody, VehiclePatchMode, LocationPatchMode } from "./models/models";
+import { AuthRequestBody, ProfileReqBody } from "./models/models";
 import { Query } from "express-serve-static-core";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
@@ -17,6 +17,7 @@ app.use(bodyParser.json());
 const port = process.env.PORT ?? 3000;
 const JWT_SECRET: string = process.env.JWT_SECRET ?? "";
 const REFRESH_JWT_SECRET: string = process.env.REFRESH_JWT_SECRET ?? "";
+const EMAIL_SECRET: string = process.env.EMAIL_JWT_SECRET ?? "";
 
 if (JWT_SECRET === "") {
   console.log("JWT_SECRET REQUIRED");
@@ -27,6 +28,12 @@ if (REFRESH_JWT_SECRET === "") {
   console.log("JWT_SECRET REQUIRED");
   process.exit(0);
 }
+
+if (EMAIL_SECRET === "") {
+  console.log("EMAIL_SECRET REQUIRED");
+  process.exit(0);
+}
+
 
 app.post("/register", async (req, res) => {
   try {
@@ -39,7 +46,8 @@ app.post("/register", async (req, res) => {
   }
   
   let user_id = result;
-  const mail = await email.sendVerification(body.email, user_id);
+  const verifyToken = jwt.sign({ id: user_id }, EMAIL_SECRET, {expiresIn: "1d"});
+  const mail = await email.sendVerification(body.email, user_id, verifyToken);
 
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
   const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
@@ -54,10 +62,12 @@ app.post("/register", async (req, res) => {
 }
 });
 
-app.get("/verify/:user_id", async (req, res) => {
+app.get("/verify/:user_id/:token", async (req, res) => {
   try {
     const { user_id } = req.params;
+    const { token } = req.params;
 
+    const decoded = jwt.verify(token, EMAIL_SECRET);
     const result = await utils.verify(+user_id);
 
     res.status(200).send("Account successfully verified!");

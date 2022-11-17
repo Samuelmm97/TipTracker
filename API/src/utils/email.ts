@@ -2,8 +2,7 @@ const nodemailer = require("nodemailer");
 
 export const email = {
 
-    // TODO: Add token to verification link
-    sendVerification: async (recipient: string, user_id: number) => {
+    sendVerification: async (recipient: string, user_id: number, token: string) => {
         try {
             let transporter = nodemailer.createTransport({
                 service: "gmail",
@@ -13,7 +12,7 @@ export const email = {
                 },
             });
 
-            let link = `${process.env.BACKEND_HOST}/verify/${user_id}`;
+            let link = `${process.env.BACKEND_HOST}/verify/${user_id}/${token}`;
 
             let info = await transporter.sendMail({
                 from: `"TipMate Team" <${process.env.EMAIL_ADDRESS}>`,
