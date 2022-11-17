@@ -39,7 +39,7 @@ app.post("/register", async (req, res) => {
   }
   
   let user_id = result;
-  const mail = await email.sendVerification(body.email, user_id, String(port));
+  const mail = await email.sendVerification(body.email, user_id);
 
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
   const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
@@ -58,9 +58,9 @@ app.get("/verify/:user_id", async (req, res) => {
   try {
     const { user_id } = req.params;
 
-    const result = utils.verify(+user_id);
+    const result = await utils.verify(+user_id);
 
-    res.status(200).send("Account verified!");
+    res.status(200).send("Account successfully verified!");
   } catch(e) {
     console.log(e);
     res.status(500).send("Couldn't verify account :(");
@@ -73,8 +73,8 @@ app.post("/login", async (req, res) => {
 
   let result = await utils.login(body);
 
-  if (!result) {
-    res.status(400).send({message: "Login failed: Invalid username/password"});
+  if (result != null) {
+    res.status(400).send({message: "Login failed: " + result});
     return;
   }
 

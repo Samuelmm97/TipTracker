@@ -37,7 +37,6 @@ export const utils = {
       const create = await sql`INSERT INTO accounts (email, password, created_on, last_login, verified)
       VALUES (${user.email}, ${""}, current_timestamp, current_timestamp, FALSE)
       RETURNING id`;
-
       let user_id = create[0].id;
 
       bcrypt.hash(user.password, saltRounds, async (err, hash: string) => {
@@ -61,7 +60,7 @@ export const utils = {
 
   verify: async(user_id: number) => {
     try {
-      const result = await sql`UPDATE accounts
+      await sql`UPDATE accounts
       set verified = TRUE
       WHERE id = ${user_id}`;
 
@@ -74,8 +73,13 @@ export const utils = {
 
   login: async (user: AuthRequestBody) => {
     try {
-      const result = await sql`SELECT password FROM accounts
+      const result = await sql`SELECT verified, password FROM accounts
          WHERE email = ${user.email}`;
+
+      let verified = result[0].verified;
+      if (!verified) {
+        return "Account not verified";
+      }
 
       let password = "" + result[0].password;
       let isValid = await new Promise((res, rej) => {
@@ -84,12 +88,17 @@ export const utils = {
         });
       });
 
-      return isValid;
+      if (!isValid) {
+        return "Invalid username/password";
+      }
+
+      return null;
     } catch (e) {
       console.log("Error getting user during login postgres", e);
-      return false;
+      return e;
     }
   },
+
   onboarding: async (profile: ProfileReqBody) => {
     try {
       let location_id = null;
@@ -107,7 +116,7 @@ export const utils = {
         ${location_id}, ${profile.wage}, ${profile.userId}, current_timestamp)
         RETURNING profile_id`;
       
-      console.log(insert);
+      //console.log(insert);
       let profile_id = insert[0].profile_id;
       
 
@@ -120,6 +129,7 @@ export const utils = {
       return false;
     }
   },
+
   getProfile: async (userId: string) => {
     try {
       const result = await sql`SELECT * FROM profile
@@ -130,6 +140,7 @@ export const utils = {
       return false;
     }
   },
+
   updateProfile: async (userId: string, profile: any) => {
     try {
       const result = await sql`update profile

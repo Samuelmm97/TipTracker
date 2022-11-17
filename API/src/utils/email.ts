@@ -2,28 +2,32 @@ const nodemailer = require("nodemailer");
 
 export const email = {
 
-    sendVerification: async (recipient: string, user_id: number, port: string) => {
+    // TODO: Add token to verification link
+    sendVerification: async (recipient: string, user_id: number) => {
+        try {
+            let transporter = nodemailer.createTransport({
+                service: "gmail",
+                auth: {
+                    user: process.env.EMAIL_ADDRESS,
+                    pass: process.env.EMAIL_APP_PASSWORD,
+                },
+            });
 
-        let testAccount = await nodemailer.createTestAccount();
+            let link = `${process.env.BACKEND_HOST}/verify/${user_id}`;
 
-        let transporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-            user: testAccount.user, // generated ethereal user
-            pass: testAccount.pass, // generated ethereal password
-            },
-        });
-
-        let info = await transporter.sendMail({
-            from: '"Fred Foo 👻" <foo@example.com>', // sender address
-            to: recipient, // list of receivers
-            subject: "Tipmate account verification", // Subject line
-            text: `http://localhost:3000/verify/${user_id}`, // plain text body
-            html: `<b><a href='http://localhost:3000/verify/${user_id}'>http://localhost:3000/verify/${user_id}</a></b>`, // html body
-        });
-
-        console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+            let info = await transporter.sendMail({
+                from: `"TipMate Team" <${process.env.EMAIL_ADDRESS}>`,
+                to: recipient,
+                subject: "Tipmate account verification",
+                text: `Welcome to TipMate!\n\n
+                To verify your account, click on the following link: ${link}`,
+                html: `<p>Welcome to TipMate!</p>
+                <p>&nbsp;</p>
+                <p>To verify your account, please click on the following link: 
+                <a href='${link}'>${link}</a></p>`
+            });
+        } catch(e) {
+            console.log("Error sending verification email", e);
+        }
     }
 };
