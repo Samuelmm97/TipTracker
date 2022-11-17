@@ -42,7 +42,7 @@ app.post("/register", async (req, res) => {
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
-  res.status(201).send({message: "Registration successful"});
+  res.status(201).send({message: "Registration successful."});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: String(error)});
@@ -56,7 +56,7 @@ app.post("/login", async (req, res) => {
   let result = await utils.login(body);
 
   if (!result) {
-    res.status(400).send({message: "Login failed: Invalid username/password"});
+    res.status(401).send({message: "Login failed: Invalid username/password."});
     return;
   }
 
@@ -66,7 +66,7 @@ app.post("/login", async (req, res) => {
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
-  res.status(200).send({message: "Login successful"});
+  res.status(200).send({message: "Login successful."});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: error});
@@ -89,10 +89,10 @@ app.post("/transaction", verifyJWT, async (req, res) => {
   let result = await utils.addTip(body, amount);
 
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({message: "Error adding tip into the system."});
     return;
   }
-  res.sendStatus(200);
+  res.status(200).send({message: "Tip entry added."});
 });
 
 app.get("/transaction", async (req, res) => {
@@ -144,10 +144,10 @@ app.patch("/transaction", verifyJWT, async (req, res) => {
     let result = await utils.updateTip(body, id, value);
 
     if (!result) {
-      res.status(404).send({message: "Tip does not exist"});
+      res.status(404).send({message: "Tip entry does not exist."});
       return;
     }
-    res.sendStatus(200);
+    res.status(200).send({message: "Tip entry updated."});
   } catch (error) {
     console.log(error);
     res.status(500).send({message: error});
@@ -159,10 +159,10 @@ app.post("/onboarding", async (req, res) => {
 
   let result = await utils.onboarding(body);
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({message: "Update user profile failed."});
     return;
   }
-  res.sendStatus(200);
+  res.status(200).send({message: "Update user profile successful."});
 });
 
 app.get("/profile/:userId", async (req, res) => {
@@ -171,10 +171,10 @@ app.get("/profile/:userId", async (req, res) => {
   let result = await utils.getProfile(userId);
 
   if (!result) {
-    res.sendStatus(400);
+    res.status(404).send({message: "User profile not found."});
     return;
   }
-  res.send(JSON.stringify(result));
+  res.status(200).send({data: JSON.stringify(result), message: "User profile retrieved successfully."});
 });
 
 app.put("/profile/:userId", async (req, res) => {
@@ -182,10 +182,10 @@ app.put("/profile/:userId", async (req, res) => {
   const { body } = req;
   let result = await utils.updateProfile(userId, body);
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({message: "User profile update failed."});
     return;
   }
-  res.sendStatus(200);
+  res.status(200).send({message: "User profile updated successfully."});
 });
 
 // TODO: Add crud methods for other tables such as vehicle, profile, account, etc.
