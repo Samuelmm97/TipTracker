@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_repository.dart';
@@ -30,14 +33,19 @@ class RegistrationCubit extends Cubit<RegistrationState> {
   ///
   /// Returns true if registration is successful, and false if unsuccessful.
   Future<bool> register() async {
+    Response? response;
     try {
       emit(Registering());
-      await registrationRepository.register(registrationModel);
+      response = await registrationRepository.register(registrationModel);
       registrationModel = RegistrationModel();
       emit(Registered());
       return true;
     } catch (e) {
-      errorMessage = ResponseHelper.errorMessage(e);
+      if (e is DioError) {
+        errorMessage = e.response!.data['message'];
+      } else if (e is SocketException) {
+        errorMessage = "Connection to server failed";
+      }
       emit(RegistrationError(errorMessage));
       rethrow;
     }

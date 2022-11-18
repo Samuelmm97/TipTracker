@@ -1,7 +1,9 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_model.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_repository.dart';
-import 'package:tip_tracker/utils/helpers/response_helper.dart';
 
 part 'login_state.dart';
 
@@ -31,13 +33,17 @@ class LoginCubit extends Cubit<LoginState> {
   Future<bool> login() async {
     try {
       emit(LoginAuthenticating());
-      await loginRepository.login(loginModel);
+      Response response = await loginRepository.login(loginModel);
       loginModel = LoginModel();
       errorMessage = "";
       emit(LoginAuthenticated());
       return true;
     } catch (e) {
-      errorMessage = ResponseHelper.errorMessage(e);
+      if (e is DioError) {
+        errorMessage = e.response!.data['message'];
+      } else if (e is SocketException) {
+        errorMessage = "Connection to server failed";
+      }
       emit(LoginError(errorMessage));
       rethrow;
     }

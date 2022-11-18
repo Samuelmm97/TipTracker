@@ -126,9 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 if (!mounted) return;
                                 if (loginSuccess) {
                                   await Navigator.pushNamedAndRemoveUntil(
-                                      context,
-                                      Routes.indexScreen,
-                                      (route) => false);
+                                      context, Routes.index, (route) => false);
                                 }
                               }
                             },
