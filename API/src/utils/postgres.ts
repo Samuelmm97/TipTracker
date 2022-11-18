@@ -9,12 +9,12 @@ const saltRounds = 10;
 const POSTGRES_USER = process.env.POSTGRES_USER;
 const POSTGRES_HOST = process.env.POSTGRES_HOST;
 const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD;
-
+//if there is no user,host,or password in the postgres process we display message and close out
 if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
   console.log("MISSING POSTGRES CREDENTIALS");
   process.exit(0);
 }
-
+//
 const sql = postgres({
   host      : POSTGRES_HOST,
   port      : 5432,
@@ -23,7 +23,7 @@ const sql = postgres({
   password  : POSTGRES_PASSWORD,
   ssl       : true,
 });
-
+//[registerUser] looks to see if a user ID is already registered, if not information is entered to insert to postgres
 export const utils = {
   registerUser: async (user: AuthRequestBody) => {
     try {
@@ -50,6 +50,7 @@ export const utils = {
       return e;
     }
   },
+  //enter email and password to [login] and verifies it in postgres, else we return error message for login
   login: async (user: AuthRequestBody) => {
     try {
       const result = await sql`SELECT password FROM accounts
@@ -68,6 +69,7 @@ export const utils = {
       return false;
     }
   },
+  //update profile info with information seen in [models]
   onboarding: async (profile: ProfileReqBody) => {
     try {
       await sql`insert into profiles (employee_type, hours_per_week, work_address, wage, user_id, last_modified)
@@ -81,6 +83,7 @@ export const utils = {
       return false;
     }
   },
+  //query to return profile information 
   getProfile: async (userId: string) => {
     try {
       const result = await sql`SELECT * FROM profile
@@ -91,6 +94,7 @@ export const utils = {
       return false;
     }
   },
+  //updating profile information from [models]
   updateProfile: async (userId: string, profile: any) => {
     try {
       const result = await sql`update profile
@@ -103,7 +107,7 @@ export const utils = {
       return false;
     }
   },
-
+  //updating information from [models] into user transaction logs
   addTip: async (user: AuthRequestBody, amount: string) => {
     try {
       const idResult = await sql`SELECT id FROM accounts
@@ -125,7 +129,7 @@ export const utils = {
       return false;
     }
   },
-
+  //query to select tip previously added to profile
   getTips: async (user: AuthRequestBody, period: number) => {
     try {
       const idResult = await sql`SELECT id FROM accounts
@@ -145,7 +149,7 @@ export const utils = {
       return null;
     }
   },
-
+  //deleting tip from DB
   deleteTip: async (user: AuthRequestBody, id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM transactions
@@ -156,7 +160,7 @@ export const utils = {
       return false;
     }
   },
-
+  //updating tip information from selected tip in profile
   updateTip: async (user: AuthRequestBody, id: number, value: string) => {
     try {
       const updateResult = await sql`UPDATE transactions
@@ -168,7 +172,7 @@ export const utils = {
       return false;
     }
   },
-
+  //adding vehicle information from [models]
   addVehicle: async (profile_id: number, cost2Own: number, make: string, model: string, year: number) => {
     try {
       const result = await sql`INSERT INTO vehicles (profile_id, cost_to_own, make, model, year)
@@ -180,7 +184,7 @@ export const utils = {
       return false;
     }
   },
-
+  //returns vehicle information previously inputted
   getVehicle: async(profile_id: number) => {
     try {
       const vehicleResult = await sql`SELECT * FROM vehicles
@@ -196,7 +200,7 @@ export const utils = {
       return null;
     }
   },
-
+  //deletes vehicle information previously inputted
   deleteVehicle: async(vehicle_id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM vehicles
@@ -208,7 +212,7 @@ export const utils = {
       return false;
     }
   },
-
+  //updating vehicle information previously inputted
   patchVehicle:async (vehicle_id: number, vehicle: any) => {
     try {
       const result = await sql`UPDATE vehicles
@@ -221,7 +225,7 @@ export const utils = {
       return false;
     }
   },
-
+  //adds address information found in [models]
   addLocation: async(address1: string, address2: string, city: string, state: string, zip_code: string) => {
     try {
       const result = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code)
@@ -234,7 +238,7 @@ export const utils = {
     }
   },
 
-  //TODO: apply different search modes?
+  //getting locations from a location ID
   getLocation: async(location_id: number) => {
     try {
       const locationResult = await sql`SELECT * FROM locations
@@ -251,7 +255,7 @@ export const utils = {
     }
   },
 
-  // In what situations should a location be deleted?
+  // deleting location in the event of a location "closing down" or not existing anymore
   deleteLocation: async(location_id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM locations
@@ -263,7 +267,7 @@ export const utils = {
       return false;
     }
   },
-
+  //updating location if needed
   patchLocation: async(location_id: number, location: any) => {
     try {
       const updateResult = await sql`UPDATE locations

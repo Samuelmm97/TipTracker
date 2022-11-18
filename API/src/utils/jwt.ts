@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { TokenExpiredError } = jwt;
-
+//error handling if [catchError] occurs it displays user info and token refreshed, else returns an unauthorized user status
 const catchError = (userId: string, err: Error, res: any, next: any) => {
   if (err instanceof TokenExpiredError) {
     console.log("Token being refreshed...");
@@ -14,7 +14,7 @@ const catchError = (userId: string, err: Error, res: any, next: any) => {
     return;
   }
 };
-
+//if token is verified it registers user as verified, else it sends a message requiring access token.
 export const verifyJWT = (req: any, res: any, next: any) => {
   const token = req.header("auth-token");
   if (!token)
