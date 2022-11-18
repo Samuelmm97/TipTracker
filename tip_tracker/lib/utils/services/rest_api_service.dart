@@ -24,28 +24,18 @@ class RestApiService {
   ///
   /// Throws [SocketException], unless the error is [DioError]. Then it rethrows
   /// [DioError].
-  static Future<dynamic> _get(String url) async {
-    try {
-      Map<String, String> headers = {"Accept": "application/json"};
-      headers.addAll(await _storage.readTokens());
+  static Future<Response> _get(String url) async {
+    Map<String, String> headers = {"Accept": "application/json"};
+    headers.addAll(await _storage.readTokens());
 
-      final Response response = await Dio().get(
-        url,
-        options: Options(
-          headers: headers,
-        ),
-      );
+    final Response response = await Dio().get(
+      url,
+      options: Options(
+        headers: headers,
+      ),
+    );
 
-      return response;
-    } catch (e) {
-      if (e is DioError) {
-        if (e.error is SocketException) {
-          throw (e.error);
-        } else {
-          rethrow;
-        }
-      }
-    }
+    return response;
   }
 
   /// This function is used for all post methods.
@@ -58,35 +48,25 @@ class RestApiService {
   ///
   /// Throws [SocketException], unless the error is [DioError]. Then it rethrows
   /// [DioError].
-  static Future<dynamic> _post(String url, Map<String, dynamic> body) async {
-    try {
-      Map<String, String> headers = {
-        "Acception": "application/json",
-        "Content-type": "application/json",
-      };
-      headers.addAll(await _storage.readTokens());
+  static Future<Response> _post(String url, Map<String, dynamic> body) async {
+    Map<String, String> headers = {
+      "Acception": "application/json",
+      "Content-type": "application/json",
+    };
+    headers.addAll(await _storage.readTokens());
 
-      final Response response = await Dio().post(
-        url,
-        data: json.encode(body),
-        options: Options(
-          headers: headers,
-        ),
-      );
+    final Response response = await Dio().post(
+      url,
+      data: json.encode(body),
+      options: Options(
+        headers: headers,
+      ),
+    );
 
-      _storage.storeTokens(response.headers.map["auth-token"]!.first,
-          response.headers.map["refresh-token"]!.first);
+    _storage.storeTokens(response.headers.map["auth-token"]!.first,
+        response.headers.map["refresh-token"]!.first);
 
-      return response;
-    } catch (e) {
-      if (e is DioError) {
-        if (e.error is SocketException) {
-          throw (e.error);
-        } else {
-          rethrow;
-        }
-      }
-    }
+    return response;
   }
 
   // AUTHENTICATION
@@ -94,21 +74,21 @@ class RestApiService {
   /// Makes a call to the login endpoint.
   ///
   /// Returns the response.
-  static Future<dynamic> login(LoginModel loginModel) async {
+  static Future<Response> login(LoginModel loginModel) async {
     return await _post("$apiPath/login", loginModel.toJson());
   }
 
   /// Makes a call to the register endpoint.
   ///
   /// Returns the response.
-  static Future<dynamic> register(RegistrationModel registrationModel) async {
+  static Future<Response> register(RegistrationModel registrationModel) async {
     return await _post("$apiPath/register", registrationModel.toJson());
   }
 
   /// Makes a call to the token verification endpoint.
   ///
   /// Returns the response.
-  static Future<dynamic> verifyToken() async {
+  static Future<Response> verifyToken() async {
     return await _get("$apiPath/verify_token");
   }
 }
