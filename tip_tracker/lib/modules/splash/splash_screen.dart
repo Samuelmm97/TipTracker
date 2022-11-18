@@ -28,14 +28,14 @@ class _SplashScreenState extends State<SplashScreen> {
         if (state is SplashLoaded) {
           SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
             Navigator.pushNamedAndRemoveUntil(
-                context, Routes.indexScreen, (route) => false);
+                context, Routes.index, (route) => false);
           });
           splashCubit.close();
         }
         if (state is SplashError) {
           SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
             Navigator.pushNamedAndRemoveUntil(
-                context, Routes.authIndexScreen, (route) => false);
+                context, Routes.authIndex, (route) => false);
           });
           splashCubit.close();
         }

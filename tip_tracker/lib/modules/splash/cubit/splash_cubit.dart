@@ -1,6 +1,8 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tip_tracker/modules/splash/cubit/splash_repository.dart';
-import 'package:tip_tracker/utils/helpers/response_helper.dart';
 import 'package:tip_tracker/utils/services/rest_api_service.dart';
 part 'splash_state.dart';
 
@@ -30,7 +32,11 @@ class SplashCubit extends Cubit<SplashState> {
       errorMessage = "";
       emit(SplashLoaded());
     } catch (e) {
-      errorMessage = ResponseHelper.errorMessage(e);
+      if (e is DioError) {
+        errorMessage = e.response!.data['message'];
+      } else if (e is SocketException) {
+        errorMessage = "Connection to server failed";
+      }
       emit(SplashError(errorMessage));
       rethrow;
     }
