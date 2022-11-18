@@ -9,12 +9,12 @@ import 'package:tip_tracker/main.dart';
 /// This class serves 2 purposes. To manage ease of access to all screen routes,
 /// and to build those routes via [buildRoutes] for [MyApp].
 class Routes {
-  static String indexScreen = "/";
-  static String splashScreen = "/splashscreen/";
-  static String userScreen = "/user/";
-  static String loginScreen = "/login/";
-  static String registerScreen = "/register/";
-  static String authIndexScreen = "/auth/";
+  static String index = "/";
+  static String splash = "/splashscreen/";
+  static String user = "/user/";
+  static String login = "/login/";
+  static String register = "/register/";
+  static String authIndex = "/auth/";
 
   /// Used to build routes for [MyApp].
   ///
@@ -22,15 +22,15 @@ class Routes {
   static Map<String, WidgetBuilder> buildRoutes() {
     return {
       // AUTHENTICATION
-      splashScreen: (BuildContext context) => const SplashScreen(),
-      loginScreen: (BuildContext context) => const LoginScreen(),
-      registerScreen: (BuildContext context) => const RegistrationScreen(),
-      authIndexScreen: (BuildContext context) => const AuthIndexScreen(),
+      splash: (BuildContext context) => const SplashScreen(),
+      login: (BuildContext context) => const LoginScreen(),
+      register: (BuildContext context) => const RegistrationScreen(),
+      authIndex: (BuildContext context) => const AuthIndexScreen(),
       // ForgotPassword.routeName: (BuildContext context) =>
       //     ForgotPassword(),
 
       // Modules
-      indexScreen: (BuildContext context) => const IndexScreen(),
+      index: (BuildContext context) => const IndexScreen(),
       // userScreen: (BuildContext context) => const UserProfileScreen(),
     };
   }
