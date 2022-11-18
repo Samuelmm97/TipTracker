@@ -1,19 +1,24 @@
 part of 'splash_cubit.dart';
 
+/// Abstract state for [SplashCubit].
 abstract class SplashState {}
 
+/// Initial state for [SplashCubit].
 class SplashInitial extends SplashState {}
 
+/// Splash loading currently state for [SplashCubit].
 class SplashLoading extends SplashState {}
 
-class SplashLoaded extends SplashState {
-  final bool tokenVerified;
+/// Splash loaded successful state for [SplashCubit] on correct
+/// token verification.
+class SplashLoaded extends SplashState {}
 
-  SplashLoaded(this.tokenVerified);
-
-  List<Object> get props => [tokenVerified];
-}
-
+/// Splash error state for [SplashCubit].
+///
+/// Takes an [errorMessage] in it's constructor, to be accessible when this
+/// state is emitted.
+///
+/// ```state.errorMessage```
 class SplashError extends SplashState {
   SplashError(this.errorMessage);
 
