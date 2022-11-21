@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:tip_tracker/config/routes/routes.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_cubit.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_cubit.dart';
-
+import 'package:tip_tracker/modules/cubit/geolocator_cubit.dart';
 
 void main() {
   runApp(
@@ -15,6 +15,9 @@ void main() {
         ),
         Provider<RegistrationCubit>(
           create: (_) => RegistrationCubit(),
+        ),
+        Provider<GeolocatorCubit>(
+          create: (_) => GeolocatorCubit(),
         ),
       ],
       child: const MyApp(),
@@ -32,7 +35,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: kDebugMode,
       title: 'Tips App',
       routes: Routes.buildRoutes(),
-      initialRoute: Routes.splashScreen,
+      initialRoute: Routes.splash,
     );
   }
 }

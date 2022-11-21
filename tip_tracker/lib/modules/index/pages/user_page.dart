@@ -20,7 +20,7 @@ class _UserPageState extends State<UserPage> {
           await SecureStorageService().deleteAll();
           if (!mounted) return;
           await Navigator.pushNamedAndRemoveUntil(
-              context, Routes.authIndexScreen, (route) => false);
+              context, Routes.authIndex, (route) => false);
         },
         child: Text(
           'LOGOUT',

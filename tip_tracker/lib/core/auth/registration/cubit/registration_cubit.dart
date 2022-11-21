@@ -1,7 +1,9 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_repository.dart';
-import 'package:tip_tracker/utils/helpers/response_helper.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
 part 'registration_state.dart';
 
@@ -32,12 +34,17 @@ class RegistrationCubit extends Cubit<RegistrationState> {
   Future<bool> register() async {
     try {
       emit(Registering());
-      await registrationRepository.register(registrationModel);
+      Response response =
+          await registrationRepository.register(registrationModel);
       registrationModel = RegistrationModel();
       emit(Registered());
       return true;
     } catch (e) {
-      errorMessage = ResponseHelper.errorMessage(e);
+      if (e is DioError) {
+        errorMessage = e.response!.data['message'];
+      } else if (e is SocketException) {
+        errorMessage = "Connection to server failed";
+      }
       emit(RegistrationError(errorMessage));
       rethrow;
     }
