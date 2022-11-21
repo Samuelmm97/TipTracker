@@ -11,6 +11,8 @@ import { email } from "./utils/email";
 import { compareSync } from "bcrypt";
 var format = require("date-fns/format");
 
+const DEBUG = true;
+
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -144,16 +146,19 @@ app.post("/transaction", verifyJWT, async (req, res) => {
 
 app.get("/transaction", async (req, res) => {
   try {
-    const body = req.body;
-    let userId: number = body.userId;
-    let period: number = body.period;
+    const params: Query = req.query;
+    const userId: number = Number(params.userId);
+    const period: number = Number(params.period);
 
-      let result = await utils.getTips(userId, period);
+    console.log('here');
+    console.log(period);
 
-      if (!result) {
-        res.status(404).send({message: "Tip entry does not exist."});
-        return;
-      }
+    let result = await utils.getTips(userId, period);
+
+    if (!result) {
+      res.status(404).send({message: "Tip entry does not exist.", userId: userId, period: period, result: result});
+      return;
+    }
 
     res.status(200).send({message: "Tip entry retrieved.", data: result});
   } catch (error) {
@@ -201,11 +206,14 @@ app.patch("/transaction", verifyJWT, async (req, res) => {
       }
     }
 
-    const tip = { location_id: location_id, tip_amount: body.amount };
+    const tip = { location_id: Number(location_id), tip_amount: body.tip_amount };
     console.log(tip);
     let result = await utils.updateTip(transaction_id, tip);
 
     if (!result) {
+      if (DEBUG) {
+        res.status(404).send({message: "Tip does not exist", result: result});
+      }
       res.status(404).send({message: "Tip does not exist"});
       return;
     }
@@ -266,17 +274,17 @@ app.post("/vehicle", verifyJWT, async(req, res) => {
     res.sendStatus(400);
     return;
   }
-  res.send({ vehicle_id: result }).status(200);
+  res.status(200).send({ vehicle_id: result });
 });
 
 app.get("/vehicle", async(req, res) => {
-  const body = req.body;
-  let profile_id: number = body.profile_id;
+  const params: Query = req.query;
+  let profile_id: number = Number(params.profile_id);
   
   let result = await utils.getVehicle(profile_id);
 
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({result: result, profile_id: profile_id});
     return;
   }
 
@@ -324,17 +332,17 @@ app.post("/location", verifyJWT, async(req, res) => {
     res.sendStatus(400);
     return;
   }
-  res.send({ location_id: result }).status(200);
+  res.status(200).send({ location_id: result });
 });
 
 app.get("/location", async(req, res) => {
-  const body = req.body;
-  let location_id: number = body.location_id;
+  const params: Query = req.query;
+  let location_id: number = Number(params.location_id);
 
   let result = await utils.getLocation(location_id);
 
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({result: result, location_id: location_id});
     return;
   }
 

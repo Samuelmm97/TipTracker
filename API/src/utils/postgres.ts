@@ -320,7 +320,7 @@ export const utils = {
    *      getTips(user1, 7);
    *      await getTips(user2, 15);
    */
-  getTips: async (userId: number, period: number) => { //TODO: replace user input with user_id
+  getTips: async (userId: number, period: number) => {
     try {
       const histResult = await sql`SELECT * FROM transactions
           WHERE user_id = ${userId} AND tip_date > (current_timestamp::DATE - ${period}::integer)`;
@@ -352,6 +352,7 @@ export const utils = {
     try {
       const deleteResult = await sql`DELETE FROM transactions
         WHERE id = ${id}`;
+
       return true;
     } catch (e) {
       console.log("Error deleting tip from database", e);
@@ -382,7 +383,7 @@ export const utils = {
       return true;
     } catch (e) {
       console.log("Error updating tip on database", e);
-      return false;
+      return e;
     }
   },
 
