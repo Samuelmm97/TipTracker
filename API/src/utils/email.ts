@@ -9,9 +9,9 @@ export const email = {
      *          the registration step. This email contains a verification link with a token that 
      *          ties the link with the account it's meant for.
      * 
-     * @param   recipient   string      email of the recipient
-     * @param   user_id     number      id of user for accounts table in database
-     * @param   token       string      jwt token for building verification link
+     * @param   {string}    recipient   email of the recipient
+     * @param   {number}    user_id     id of user for accounts table in database
+     * @param   {string}    token       jwt token for building verification link
      * 
      * @return  None
      * 

@@ -34,9 +34,9 @@ export const utils = {
    *          provided hasn't been used for an already existing account, and will return an 
    *          error if that's the case.
    * 
-   * @param   user        AuthRequestBody    interface with an email string and a password string
+   * @param   {AuthRequestBody}   user    interface with an email string and a password string
    * 
-   * @return  user_id  :  number  |  e  :  Error
+   * @return  {number}    user_id
    * 
    * @example
    *      registerUser({ email: "example@example.com", password: "123SafePassword" });
@@ -81,12 +81,12 @@ export const utils = {
    *          true for the user whose id is specified in user_id. Returns true if the update was
    *          successful, and false if there was an error during the database query.
    * 
-   * @param   user_id     number      id of user in accounts table in database
+   * @param   {number}    user_id      id of user in accounts table in database
    * 
-   * @return  Boolean
+   * @return  {Boolean}
    * 
    * @example
-   *      verifyUser(1)
+   *      verifyUser(1);
    *      await verifyUser(90);
    */
   verifyUser: async(user_id: number) => {
@@ -102,6 +102,21 @@ export const utils = {
     }  
   },
 
+  /**
+   * @function    :   login()
+   * 
+   * @brief   This function verifies the enail and pasword in the 'user' input by looking for a 
+   *          match in the database. If an account is found but not verified, or its password does
+   *          not match, it will not grant access to the user.
+   * 
+   * @param   {AuthRequestBody}   user 
+   * 
+   * @returns {String}
+   * 
+   * @example
+   *      login(user1)
+   *      await login({ email: "example@aol.com", password: "111111111111" });
+   */
   login: async (user: AuthRequestBody) => {
     try {
       const result = await sql`SELECT verified, password FROM accounts
@@ -141,7 +156,7 @@ export const utils = {
    *          be entered as the profile_id corresponding to the user's record in the accounts table
    *          in the database.
    * 
-   * @param   profile      ProfileReqBody    interface with profile info*
+   * @param   {ProfileReqBody}    profile    interface with profile info*
    *                                       * see '/API/src/models/models.ts'
    * 
    * @return  Boolean
@@ -180,30 +195,73 @@ export const utils = {
     }
   },
 
+  /**
+   * @function    :   getProfile()
+   * 
+   * @brief   This function returns the entry in the profiles table in the db whose user_id matches
+   *          the input 'userId'
+   * 
+   * @param     {string}    userId 
+   * 
+   * @returns   {}
+   * 
+   * @example
+   *      getProfile(17);
+   *      await getProfile(100);
+   */
   getProfile: async (userId: string) => {
     try {
-      const result = await sql`SELECT * FROM profile
+      const result = await sql`SELECT * FROM profiles
          WHERE user_id = ${userId}`;
       return result[0];
     } catch (e) {
-      console.log("Error getting profile postgres", e);
+      console.log("Error getting profiles postgres", e);
       return false;
     }
   },
 
+  /**
+   * @function    :   updateProfile()
+   * 
+   * @brief   This function updates the entry in the db table profiles with any fields specified in
+   *          the 'profiile' input.
+   * 
+   * @param     {string}    userId 
+   * @param     {any}       profile 
+   * 
+   * @returns   {boolean}
+   * 
+   * @example
+   *       updateProfile(18, { first_name: "Mark", hours_per_week: 14 });
+   *       await updateProfile(19, profile1);
+   */
   updateProfile: async (userId: string, profile: any) => {
     try {
-      const result = await sql`update profile
+      const result = await sql`update profiles
                               set ${sql(profile)},
                               "last_modified" = current_timestamp
                               WHERE user_id = ${userId}`;
       return true;
     } catch (e) {
-      console.log("Error getting profile postgres", e);
+      console.log("Error getting profiles postgres", e);
       return false;
     }
   },
 
+  /**
+   * @function    :   getAccount()
+   * 
+   * @brief   This function returns the entry in the accounts table in the db whose id matches
+   *          the email field in 'user'.
+   * 
+   * @param   {AuthRequestBody}   user 
+   * 
+   * @returns {}
+   * 
+   * @example
+   *      getAccount(user1);
+   *      await getAccount({ email: "123@gmail.com", password: "0987654" });
+   */
   getAccount: async(user: AuthRequestBody) => {
     try {
       const result = await sql`SELECT * from accounts
@@ -220,20 +278,24 @@ export const utils = {
     }
   },
 
-  addTip: async (user: AuthRequestBody, amount: string) => {
+  /**
+   * @function    :   addTip()
+   * 
+   * @brief   This function 
+   * 
+   * @param   {string}    amount 
+   * @param   {number}    user_id
+   * @param   {number}    location_id
+   * 
+   * @returns {Boolean}
+   * 
+   * @example
+   */
+  addTip: async (amount: string, user_id: number, location_id: number) => {
     try {
-      const idResult = await sql`SELECT id FROM accounts
-        WHERE email = ${user.email}`;
-
-      if (idResult.length == 0) {
-        return false;
-      }
-
-      let id: number = +(""+idResult[0].id);
-
       const tipResult =
-        await sql`INSERT INTO transactions (tip_amount, user_id, tip_date) 
-        VALUES (${amount}::FLOAT8::NUMERIC::MONEY, ${id}, current_timestamp)`;
+        await sql`INSERT INTO transactions (tip_amount, user_id, location_id, tip_date) 
+        VALUES (${amount}::FLOAT8::NUMERIC::MONEY, ${user_id}, ${location_id}::BIGINT, current_timestamp)`;
 
       return true;
     } catch (e) {
@@ -242,16 +304,26 @@ export const utils = {
     }
   },
 
-  getTips: async (user: AuthRequestBody, period: number) => {
+  /**
+   * @function    :   getTips()
+   * 
+   * @brief   This function returns any entries in the transactions db whose user_id values match 
+   *          the input 'userId' and are within the time period in days specified in the 'period' 
+   *          input.
+   * 
+   * @param   {number}    userId
+   * @param   {number}    period 
+   * 
+   * @returns {}
+   * 
+   * @example
+   *      getTips(user1, 7);
+   *      await getTips(user2, 15);
+   */
+  getTips: async (userId: number, period: number) => { //TODO: replace user input with user_id
     try {
-      const idResult = await sql`SELECT id FROM accounts
-        WHERE email = ${user.email}`;
-      if (idResult.length == 0) {
-        return null;
-      }
-      let id: number = +("" + idResult[0].id);
       const histResult = await sql`SELECT * FROM transactions
-          WHERE user_id = ${id} AND tip_date > (current_timestamp::DATE - ${period}::integer)`;
+          WHERE user_id = ${userId} AND tip_date > (current_timestamp::DATE - ${period}::integer)`;
       if (histResult.length == 0) {
         return null;
       }
@@ -262,7 +334,21 @@ export const utils = {
     }
   },
 
-  deleteTip: async (user: AuthRequestBody, id: number) => {
+  /**
+   * @function    :   deleteTip()
+   * 
+   * @brief   This function deletes the entry in the transactions table in the db whose id matches
+   *          the input 'id'. Returns true if successful.
+   * 
+   * @param   {number}    id 
+   * 
+   * @returns  {Boolean}
+   * 
+   * @example
+   *      deleteTip(142);
+   *      await deleteTip(5);
+   */
+  deleteTip: async (id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM transactions
         WHERE id = ${id}`;
@@ -273,10 +359,25 @@ export const utils = {
     }
   },
 
-  updateTip: async (user: AuthRequestBody, id: number, value: string) => {
+  /**
+   * @function    :   updateTip()
+   * 
+   * @nrief   This function updates the entry in the transactions db table whose id matches the 'id'
+   *          input. 
+   * 
+   * @param   {number}    id 
+   * @param   {any}   tip
+   * 
+   * @returns {Boolean}
+   * 
+   * @example
+   *      updateTip(88, { amount: "$12.90" });
+   *      await updateTip(999, { ampount: "$11.11", location_id: 123});
+   */
+  updateTip: async (id: number, tip: any) => {
     try {
       const updateResult = await sql`UPDATE transactions
-        SET tip_amount = ${value}::FLOAT8::NUMERIC::MONEY
+        SET ${sql(tip)}
         WHERE id = ${id}`;
       return true;
     } catch (e) {
@@ -285,10 +386,10 @@ export const utils = {
     }
   },
 
-  addVehicle: async (profile_id: number, cost2Own: number, make: string, model: string, year: number) => {
+  addVehicle: async (profile_id: number, cost_to_own: number, make: string, model: string, year: number) => {
     try {
       const result = await sql`INSERT INTO vehicles (profile_id, cost_to_own, make, model, year)
-      VALUES (${profile_id}::BIGINT, ${cost2Own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)
+      VALUES (${profile_id}::BIGINT, ${cost_to_own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)
       RETURNING vehicle_id`;
 
       return result[0].vehicle_id;
@@ -304,7 +405,7 @@ export const utils = {
         WHERE profile_id = ${profile_id}`;
 
       if (vehicleResult.length == 0) {
-        return null;
+        return [];
       }
 
       return vehicleResult;
@@ -339,10 +440,10 @@ export const utils = {
     }
   },
 
-  addLocation: async(address1: string, address2: string, city: string, state: string, zip_code: string) => {
+  addLocation: async(address_1: string, address_2: string, city: string, state: string, zip_code: string) => {
     try {
       const result = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code)
-        VALUES (${address1}, ${address2}, ${city}, ${state}, ${zip_code})
+        VALUES (${address_1}, ${address_2}, ${city}, ${state}, ${zip_code})
         RETURNING location_id`;
 
       return result[0].location_id;
@@ -352,7 +453,6 @@ export const utils = {
     }
   },
 
-  //TODO: apply different search modes?
   getLocation: async(location_id: number) => {
     try {
       const locationResult = await sql`SELECT * FROM locations
@@ -369,7 +469,6 @@ export const utils = {
     }
   },
 
-  // In what situations should a location be deleted?
   deleteLocation: async(location_id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM locations
@@ -394,4 +493,67 @@ export const utils = {
       return false;
     }
   },
+
+  /**
+   * @function    searchLocation()
+   * 
+   * @brief   This function searches through the locations table in the database for an entry that
+   *          matches the fields specified in 'address'
+   * 
+   * @param   {any}   address 
+   * 
+   * @returns {number}
+   * 
+   * @example
+   *      searchLocation({ address_1: "123 ne street", address_2: "", city: "Orlando", zip_code: "33333"});
+   *      await searchLocation(profile2);
+   */
+  searchLocation: async(address: any) => {
+    try {
+      const result = await sql`SELECT * FROM locations
+      WHERE address_1 = ${address.address_1}
+      AND address_2 = ${address.address_2}
+      AND city = ${address.city}
+      AND state = ${address.state}
+      AND zip_code = ${address.zip_code}`;
+
+      if (result.length == 0) {
+        return null;
+      }
+
+      return result[0].location_id;
+    } catch(e) {
+      console.log("Error searching location", e);
+      return null;
+    }
+  },
+
+  /**
+   * @function   locationUses()
+   * 
+   * @brief   This function returns the number of transaction and profile entries in the database
+   *          that use the location entry whose location_id matches the 'location_id' input.
+   * 
+   * @param   {number}    location_id 
+   * 
+   * @returns {number}
+   * 
+   * @example
+   *      locationUses(15);
+   *      await locationUses(77);
+   */
+  locationUses: async(location_id: number) => {
+    try {
+      const transactions = await sql`SELECT location_id FROM transactions
+      WHERE location_id = ${location_id}`;
+
+      const profiles = await sql`SELECT work_location FROM profiles
+      WHERE work_location = ${location_id}`
+
+      return transactions.length + profiles.length;
+    } catch(e) {
+      console.log("Error looking through profiles and transactions", e);
+      return null;
+    }
+  }
 };

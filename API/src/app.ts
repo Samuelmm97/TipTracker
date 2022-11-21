@@ -91,10 +91,16 @@ app.post("/login", async (req, res) => {
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
   const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
+  const account = await utils.getAccount(body);
+  if (account == null) {
+    throw new Error("Couldn't find account");
+  }
+  console.log(account);
+
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
-  res.status(200).send({message: "Login successful"});
+  res.status(200).send({message: "Login successful", user_id: account.id, profile_id: account.profile_id});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: error});
@@ -110,11 +116,24 @@ app.get("/verify_token", verifyJWT, async (req, res) => {
 })
 
 app.post("/transaction", verifyJWT, async (req, res) => {
-  const body: AuthRequestBody = req.body;
-  const params: Query = req.query;
-  let amount: string = "" + params.amount;
+  const body = req.body;
+  let amount: string = body.amount;
+  const address = body.address;
 
-  let result = await utils.addTip(body, amount);
+  let location_id = null;
+  if (body.address != null) {
+    console.log("searching in db");
+    location_id = await utils.searchLocation(body.address);
+    if (location_id == null) {
+      console.log("Adding location");
+      location_id = await utils.addLocation(address.address_1, address.address_2, address.city, address.state, address.zip_code);
+    }
+  } else if (body.location_id != null) {
+    location_id = body.location_id;
+  }
+
+  console.log("Adding tip", typeof location_id, location_id);
+  let result = await utils.addTip(amount, body.user_id, location_id);
 
   if (!result) {
     res.sendStatus(400);
@@ -125,11 +144,11 @@ app.post("/transaction", verifyJWT, async (req, res) => {
 
 app.get("/transaction", async (req, res) => {
   try {
-    const body: AuthRequestBody = req.body;
-    const params: Query = req.query;
-    let period: number = +("" + params.period);
+    const body = req.body;
+    let userId: number = body.userId;
+    let period: number = body.period;
 
-      let result = await utils.getTips(body, period);
+      let result = await utils.getTips(userId, period);
 
       if (!result) {
         res.status(404).send({message: "Tip entry does not exist."});
@@ -145,11 +164,10 @@ app.get("/transaction", async (req, res) => {
 
 app.delete("/transaction", verifyJWT, async (req, res) => {
   try {
-    const body: AuthRequestBody = req.body;
-    const params: Query = req.query;
-    let id: number = +("" + params.id);
+    const body = req.body;
+    let id: number = body.id;
 
-    let result = await utils.deleteTip(body, id);
+    let result = await utils.deleteTip(id);
 
     if (!result) {
       res.status(404).send({message:"Tip entry does not exist."});
@@ -164,12 +182,28 @@ app.delete("/transaction", verifyJWT, async (req, res) => {
 
 app.patch("/transaction", verifyJWT, async (req, res) => {
   try {
-    const body: AuthRequestBody = req.body;
-    const params: Query = req.query;
-    let id: number = +("" + params.id);
-    let value: string = "" + params.value;
+    const body = req.body;
+    let transaction_id: number = body.transaction_id;
+    let location_id: number = body.location_id;
+    let address = body.address;
 
-    let result = await utils.updateTip(body, id, value);
+    if (address != null)  {
+      let uses = await utils.locationUses(location_id);
+      if (uses == 1) {
+        await utils.patchLocation(location_id, address);
+      } else {
+        let search = await utils.searchLocation(address);
+        if (search != null) {
+          location_id = search.id;
+        } else {
+          location_id = await utils.addLocation(address.address_1, address.address_2, address.city, address.state, address.zip_code);
+        }
+      }
+    }
+
+    const tip = { location_id: location_id, tip_amount: body.amount };
+    console.log(tip);
+    let result = await utils.updateTip(transaction_id, tip);
 
     if (!result) {
       res.status(404).send({message: "Tip does not exist"});
@@ -218,26 +252,26 @@ app.put("/profile/:userId", async (req, res) => {
 
 // TODO: Add crud methods for other tables such as vehicle, profile, account, etc.
 app.post("/vehicle", verifyJWT, async(req, res) => {
-  const params: Query = req.query;
+  const body = req.body;
 
-  let profile_id: number = +(""+params.profile_id);
-  let cost2Own: number = +(""+params.cost_to_own);
-  let make: string = "" + params.make;
-  let model: string = "" + params.model;
-  let year: number = +(""+params.year);
+  let profile_id: number = body.profile_id;
+  let cost_to_own: number = body.cost_to_own;
+  let make: string = body.make;
+  let model: string = body.model;
+  let year: number = body.year;
 
-  let result = await utils.addVehicle(profile_id, cost2Own, make, model, year);
+  let result = await utils.addVehicle(profile_id, cost_to_own, make, model, year);
 
   if (!result) {
     res.sendStatus(400);
     return;
   }
-  res.send(result);
+  res.send({ vehicle_id: result }).status(200);
 });
 
 app.get("/vehicle", async(req, res) => {
-  const params: Query = req.query;
-  let profile_id: number = +(""+params.profile_id);
+  const body = req.body;
+  let profile_id: number = body.profile_id;
   
   let result = await utils.getVehicle(profile_id);
 
@@ -250,8 +284,8 @@ app.get("/vehicle", async(req, res) => {
 });
 
 app.delete("/vehicle", verifyJWT, async(req, res) => {
-  const params: Query = req.query;
-  let vehicle_id: number = +(""+params.vehicle_id);
+  const body = req.body;
+  let vehicle_id: number = body.vehicle_id;
 
   let result = await utils.deleteVehicle(vehicle_id);
 
@@ -263,9 +297,8 @@ app.delete("/vehicle", verifyJWT, async(req, res) => {
 });
 
 app.patch("/vehicle", verifyJWT, async(req, res) => {
-  const params: Query = req.query;
   const body = req.body;
-  let vehicle_id: number = +(""+params.vehicle_id);
+  let vehicle_id: number = body.vehicle_id;
 
   let result = await utils.patchVehicle(vehicle_id, body);
 
@@ -277,26 +310,26 @@ app.patch("/vehicle", verifyJWT, async(req, res) => {
 });
 
 app.post("/location", verifyJWT, async(req, res) => {
-  const params: Query = req.query;
+  const body = req.body;
 
-  let address1: string = ""+params.address_1;
-  let address2: string = ""+params.address_2;
-  let city: string = ""+params.city;
-  let state: string = ""+params.state;
-  let zip_code: string = ""+params.zip_code;
+  let address_1: string = body.address_1;
+  let address_2: string = body.address_2;
+  let city: string = body.city;
+  let state: string = body.state;
+  let zip_code: string = body.zip_code;
 
-  let result = await utils.addLocation(address1, address2, city, state, zip_code);
+  let result = await utils.addLocation(address_1, address_2, city, state, zip_code);
 
   if (!result) {
     res.sendStatus(400);
     return;
   }
-  res.send(result);
+  res.send({ location_id: result }).status(200);
 });
 
 app.get("/location", async(req, res) => {
-  const params: Query = req.query;
-  let location_id: number = +(""+params.location_id);
+  const body = req.body;
+  let location_id: number = body.location_id;
 
   let result = await utils.getLocation(location_id);
 
@@ -309,8 +342,8 @@ app.get("/location", async(req, res) => {
 });
 
 app.delete("/location", verifyJWT, async(req, res) => {
-  const params: Query = req.query;
-  let location_id: number = +(""+params.location_id);
+  const body = req.body;
+  let location_id: number = body.location_id;
 
   let result = await utils.deleteLocation(location_id);
 
@@ -322,9 +355,8 @@ app.delete("/location", verifyJWT, async(req, res) => {
 });
 
 app.patch("/location", verifyJWT, async(req, res) => {
-  const params: Query = req.query;
   const body = req.body;
-  let location_id: number = +(""+params.location_id);
+  let location_id: number = body.location_id;
 
   let result = await utils.patchLocation(location_id, body);
 
