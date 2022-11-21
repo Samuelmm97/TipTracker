@@ -51,7 +51,7 @@ export const utils = {
       }
 
       const create = await sql`INSERT INTO accounts (email, password, created_on, last_login, verified)
-      VALUES (${user.email}, ${""}, current_timestamp, current_timestamp, FALSE)
+      VALUES (${user.email}, ${""}, current_timestamp, current_timestamp, TRUE)
       RETURNING id`;
       let user_id = create[0].id;
 
@@ -129,7 +129,7 @@ export const utils = {
 
       let password = "" + result[0].password;
       let isValid = await new Promise((res, rej) => {
-        bcrypt.compare(user.password, password, (err, result) => {
+        bcrypt.compare( password, user.password, (err, result) => {
           res(result);
         });
       });
