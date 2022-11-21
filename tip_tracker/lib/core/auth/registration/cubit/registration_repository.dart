@@ -1,8 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
 import 'package:tip_tracker/utils/services/rest_api_service.dart';
 
+/// Handles the API calls for [RegistrationCubit] through [RestApiService].
 class RegistrationRepository {
-  Future<void> registerUser(RegistrationModel registrationModel) async {
-    await RestApiService.registerUser(registrationModel);
+  Future<Response> register(RegistrationModel registrationModel) async {
+    return await RestApiService.register(registrationModel);
   }
 }

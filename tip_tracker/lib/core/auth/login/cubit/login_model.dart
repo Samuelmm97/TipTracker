@@ -1,14 +1,12 @@
-/// This class is used to manage the data used to register the user through
-/// [RegistrationCubit].
-class RegistrationModel {
+/// This class is used to manage the data used to login the user through
+/// [LoginCubit].
+class LoginModel {
   String email;
   String password;
-  String confirmPassword;
 
-  RegistrationModel({
+  LoginModel({
     this.email = "",
     this.password = "",
-    this.confirmPassword = "",
   });
 
   /// Returns this model as a JSON structure, [Map] of keys that are of type
@@ -18,12 +16,10 @@ class RegistrationModel {
   /// {
   ///   "email": "email@test.com",
   ///   "password": "password123",
-  ///   "confirmPassword": "password123",
   /// }
   /// ```
   Map<String, dynamic> toJson() => {
         "email": email,
         "password": password,
-        "confirmPassword": confirmPassword,
       };
 }

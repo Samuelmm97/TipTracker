@@ -1,4 +1,10 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tip_tracker/config/routes/routes.dart';
+import 'package:tip_tracker/config/styles/error_message_style.dart';
+import 'package:tip_tracker/config/styles/form_field_style.dart';
+import 'package:tip_tracker/core/auth/registration/cubit/registration_cubit.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key? key}) : super(key: key);
@@ -8,9 +14,25 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  final _emailFieldController = TextEditingController();
-  final _passwordFieldController = TextEditingController();
-  final _rePasswordFieldController = TextEditingController();
+  static final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final email = TextEditingController();
+  final password = TextEditingController();
+  final confirmPassword = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    email.text =
+        BlocProvider.of<RegistrationCubit>(context).registrationModel.email;
+    password.text =
+        BlocProvider.of<RegistrationCubit>(context).registrationModel.password;
+    confirmPassword.text = BlocProvider.of<RegistrationCubit>(context)
+        .registrationModel
+        .confirmPassword;
+  }
+
+  // TODO: Display error message
 
   @override
   Widget build(BuildContext context) {
@@ -25,117 +47,138 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              children: [
-                //  Welcome message
-                const Text(
-                  'Join Us',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 48,
-                      color: Color(0xffEFD6AC)),
-                ),
+            child: BlocBuilder<RegistrationCubit, RegistrationState>(
+                builder: (context, state) {
+              return Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    //  Welcome message
+                    const Text(
+                      'Join Us',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 48,
+                          color: Color(0xffEFD6AC)),
+                    ),
 
-                //Sub Text
-                const Text(
-                  'Add Subtext Here',
-                  style: TextStyle(fontSize: 16, color: Color(0xffEFD6AC)),
-                ),
-                const SizedBox(
-                  height: 64,
-                ),
+                    //Sub Text
+                    const Text(
+                      'Add Subtext Here',
+                      style: TextStyle(fontSize: 16, color: Color(0xffEFD6AC)),
+                    ),
+                    const SizedBox(
+                      height: 64,
+                    ),
 
-                //  Email text field
-                Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: const Color(0xff04151F),
-                          borderRadius: BorderRadius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 20.0),
-                        child: TextField(
-                          controller: _emailFieldController,
-                          style: const TextStyle(color: Color(0xff3F3B3B)),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Email',
-                            hintStyle: TextStyle(color: Color(0xff3F3B3B)),
-                          ),
-                        ),
+                    //  Email text field
+                    Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: TextFormField(
+                          controller: email,
+                          style: formFieldTextStyle,
+                          decoration: FormFieldInputDecoration('Email'),
+                          onChanged: (value) =>
+                              BlocProvider.of<RegistrationCubit>(context)
+                                  .registrationModel
+                                  .email = value,
+                          validator: (value) {
+                            if (value == "") {
+                              return "Field must not be empty";
+                            } else if (value != null &&
+                                !EmailValidator.validate(value)) {
+                              return "Email is not valid";
+                            }
+                            return null;
+                          },
+                        )),
+
+                    //  Password text field
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 32),
+                      child: TextFormField(
+                        controller: password,
+                        obscureText: true,
+                        style: formFieldTextStyle,
+                        decoration: FormFieldInputDecoration('Password'),
+                        onChanged: (value) =>
+                            BlocProvider.of<RegistrationCubit>(context)
+                                .registrationModel
+                                .password = value,
+                        validator: (value) {
+                          if (value == "") {
+                            return "Field must not be empty";
+                          } else if (value != confirmPassword.text) {
+                            return "Passwords do not match";
+                          }
+                          return null;
+                        },
                       ),
-                    )),
+                    ),
 
-                //  Password text field
-                Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 32),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: const Color(0xff04151F),
-                          borderRadius: BorderRadius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 20.0),
-                        child: TextField(
-                          controller: _passwordFieldController,
+                    //  Re Enter Password Field
+                    Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: TextFormField(
+                          controller: confirmPassword,
                           obscureText: true,
-                          style: const TextStyle(color: Color(0xff3F3B3B)),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Password',
-                            hintStyle: TextStyle(color: Color(0xff3F3B3B)),
-                          ),
-                        ),
-                      ),
-                    )),
+                          style: formFieldTextStyle,
+                          decoration:
+                              FormFieldInputDecoration('Re-enter password'),
+                          onChanged: (value) =>
+                              BlocProvider.of<RegistrationCubit>(context)
+                                  .registrationModel
+                                  .password = value,
+                          validator: (value) {
+                            if (value == "") {
+                              return "Field must not be empty";
+                            } else if (value != password.text) {
+                              return "Passwords do not match";
+                            }
+                            return null;
+                          },
+                        )),
 
-                //  Re Enter Password Field
-                Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: const Color(0xff04151F),
-                          borderRadius: BorderRadius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 20.0),
-                        child: TextField(
-                          controller: _rePasswordFieldController,
-                          obscureText: true,
-                          style: const TextStyle(color: Color(0xff3F3B3B)),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Re-enter Password',
-                            hintStyle: TextStyle(color: Color(0xff3F3B3B)),
-                          ),
-                        ),
-                      ),
-                    )),
+                    if (state is RegistrationError)
+                      Text(state.errorMessage, style: errorMessageStyle),
 
-                //  Sign in button
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(64, 32, 64, 16),
-                  child: GestureDetector(
-                    //On tap await user creation method?
-
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xff0BFF4F)),
-                          borderRadius: BorderRadius.circular(16)),
-                      child: const Center(
-                        child: Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            color: Color(0xff0BFF4F),
-                            fontSize: 24,
+                    //  Register button
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(64, 32, 64, 16),
+                      child: GestureDetector(
+                        //On tap await user creation method?
+                        onTap: () async {
+                          if (_formKey.currentState?.validate() != null &&
+                              _formKey.currentState?.validate() == true) {
+                            // Login
+                            bool loginSuccess =
+                                await BlocProvider.of<RegistrationCubit>(
+                                        context)
+                                    .register();
+                            // Do not use BuildContexts across async gaps (don't route without checking if this state is in the tree): https://www.flutteroverflow.dev/use-build-context-synchronously/
+                            if (!mounted) return;
+                            if (loginSuccess) {
+                              await Navigator.pushNamedAndRemoveUntil(
+                                  context, Routes.onboarding, (route) => false);
+                            }
+                          }
+                        },
+                        child: const Center(
+                          child: Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              color: Color(0xff0BFF4F),
+                              fontSize: 24,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            }),
           ),
         ),
       ),

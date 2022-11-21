@@ -5,8 +5,9 @@ import { AuthRequestBody, ProfileReqBody } from "./models/models";
 import { Query } from "express-serve-static-core";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
-import * as jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 import { verifyJWT } from "./utils/jwt";
+
 import { email } from "./utils/email";
 import { compareSync } from "bcrypt";
 var format = require("date-fns/format");
@@ -52,12 +53,13 @@ app.post("/register", async (req, res) => {
   const mail = await email.sendVerification(body.email, user_id, verifyToken);
 
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+  const refreshToken = jwt.sign({email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
-  res.status(201).send({message: "Registration successful"});
+  // TODO: Get user id from database
+  res.status(201).send({message: "Registration successful."});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: String(error)});
@@ -85,13 +87,14 @@ app.post("/login", async (req, res) => {
 
   let result = await utils.login(body);
 
-  if (result != null) {
-    res.status(400).send({message: "Login failed: " + result});
+  if (!result) {
+    res.status(401).send({message: "Login failed: Invalid username/password."});
+
     return;
   }
 
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+  const refreshToken = jwt.sign({ email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
   const account = await utils.getAccount(body);
   if (account == null) {
@@ -102,7 +105,9 @@ app.post("/login", async (req, res) => {
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
+
   res.status(200).send({message: "Login successful", user_id: account.id, profile_id: account.profile_id});
+
 } catch (error) {
   console.log(error);
   res.status(500).send({message: error});
@@ -112,12 +117,13 @@ app.post("/login", async (req, res) => {
 app.get("/verify_token", verifyJWT, async (req, res) => {
   try {
     res.status(200).send({message: "Token verified"});
-} catch (error) {
+  } catch (error) {
     res.status(500).send({message: error});
-}
-})
+  }
+});
 
 app.post("/transaction", verifyJWT, async (req, res) => {
+
   const body = req.body;
   let amount: string = body.amount;
   const address = body.address;
@@ -138,13 +144,13 @@ app.post("/transaction", verifyJWT, async (req, res) => {
   let result = await utils.addTip(amount, body.user_id, location_id);
 
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({message: "Error adding tip into the system."});
     return;
   }
-  res.sendStatus(200);
+  res.status(200).send({message: "Tip entry added."});
 });
 
-app.get("/transaction", async (req, res) => {
+app.get("/transaction/:id", verifyJWT, async (req, res) => {
   try {
     const params: Query = req.query;
     const userId: number = Number(params.userId);
@@ -157,6 +163,7 @@ app.get("/transaction", async (req, res) => {
 
     if (!result) {
       res.status(404).send({message: "Tip entry does not exist.", userId: userId, period: period, result: result});
+
       return;
     }
 
@@ -167,27 +174,30 @@ app.get("/transaction", async (req, res) => {
   }
 });
 
-app.delete("/transaction", verifyJWT, async (req, res) => {
+app.delete("/transaction/:id", verifyJWT, async (req, res) => {
   try {
+
     const body = req.body;
     let id: number = body.id;
 
     let result = await utils.deleteTip(id);
 
+
     if (!result) {
       res.status(404).send({message:"Tip entry does not exist."});
       return;
     }
-  res.status(200).send({message: "Tip successfully deleted."});
+    res.status(200).send({message: "Tip successfully deleted."});
   } catch (error) {
     console.log(error);
     res.status(500).send({message: error});
   }
 });
 
-app.patch("/transaction", verifyJWT, async (req, res) => {
+app.patch("/transaction/:id", verifyJWT, async (req, res) => {
   try {
     const body = req.body;
+
     let transaction_id: number = body.transaction_id;
     let location_id: number = body.location_id;
     let address = body.address;
@@ -210,29 +220,31 @@ app.patch("/transaction", verifyJWT, async (req, res) => {
     console.log(tip);
     let result = await utils.updateTip(transaction_id, tip);
 
+
     if (!result) {
       if (DEBUG) {
         res.status(404).send({message: "Tip does not exist", result: result});
+      } else {
+        res.status(404).send({message: "Tip does not exist"});
       }
-      res.status(404).send({message: "Tip does not exist"});
       return;
     }
-    res.sendStatus(200);
+    res.status(200).send({message: "Tip entry updated."});
   } catch (error) {
     console.log(error);
     res.status(500).send({message: error});
   }
 });
 
-app.post("/onboarding", async (req, res) => {
+app.post("/onboarding", verifyJWT, async (req, res) => {
   const body: ProfileReqBody = req.body;
 
   let result = await utils.onboarding(body);
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({message: "Update user profile failed."});
     return;
   }
-  res.sendStatus(200);
+  res.status(200).send({message: "Update user profile successful."});
 });
 
 app.get("/profile/:userId", async (req, res) => {
@@ -241,10 +253,10 @@ app.get("/profile/:userId", async (req, res) => {
   let result = await utils.getProfile(userId);
 
   if (!result) {
-    res.sendStatus(400);
+    res.status(404).send({message: "User profile not found."});
     return;
   }
-  res.send(JSON.stringify(result));
+  res.status(200).send({data: JSON.stringify(result), message: "User profile retrieved successfully."});
 });
 
 app.put("/profile/:userId", async (req, res) => {
@@ -252,10 +264,10 @@ app.put("/profile/:userId", async (req, res) => {
   const { body } = req;
   let result = await utils.updateProfile(userId, body);
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({message: "User profile update failed."});
     return;
   }
-  res.sendStatus(200);
+  res.status(200).send({message: "User profile updated successfully."});
 });
 
 // TODO: Add crud methods for other tables such as vehicle, profile, account, etc.
