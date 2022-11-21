@@ -1,11 +1,11 @@
 /// This class is used to manage the data used to register the user through
-/// [RegistrationCubit].
-class RegistrationModel {
+/// [OnboardingCubit].
+class OnboardingModel {
   String email;
   String password;
   String confirmPassword;
 
-  RegistrationModel({
+  OnboardingModel({
     this.email = "",
     this.password = "",
     this.confirmPassword = "",

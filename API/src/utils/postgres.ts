@@ -177,6 +177,7 @@ export const utils = {
         location_id = insLocation[0].location_id;
       }
 
+
       const insert = await sql`insert into profiles (employee_type, hours_per_week, work_location, fixed_wage, user_id, last_modified)
         values (${profile.employeeType}, ${profile.hoursPerWeek ?? null}, 
         ${location_id}, ${profile.wage}, ${profile.userId}, current_timestamp)
@@ -188,6 +189,7 @@ export const utils = {
       await sql`update accounts
         set profile_id = ${profile_id}
         WHERE id = ${profile.userId}`;
+
       return true;
     } catch (e) {
       console.log("Error onboarding postgres", e);
@@ -248,6 +250,7 @@ export const utils = {
     }
   },
 
+
   /**
    * @function    :   getAccount()
    * 
@@ -266,6 +269,7 @@ export const utils = {
     try {
       const result = await sql`SELECT * from accounts
       WHERE email = ${user.email}`;
+
 
       if (result.length == 0) {
         return null;
@@ -304,6 +308,7 @@ export const utils = {
     }
   },
 
+
   /**
    * @function    :   getTips()
    * 
@@ -322,6 +327,7 @@ export const utils = {
    */
   getTips: async (userId: number, period: number) => { //TODO: replace user input with user_id
     try {
+
       const histResult = await sql`SELECT * FROM transactions
           WHERE user_id = ${userId} AND tip_date > (current_timestamp::DATE - ${period}::integer)`;
       if (histResult.length == 0) {
@@ -333,6 +339,7 @@ export const utils = {
       return null;
     }
   },
+
 
   /**
    * @function    :   deleteTip()
@@ -348,16 +355,22 @@ export const utils = {
    *      deleteTip(142);
    *      await deleteTip(5);
    */
+
   deleteTip: async (id: number) => {
     try {
+      const result = await sql`SELECT FROM transactions where id = ${id}`;
       const deleteResult = await sql`DELETE FROM transactions
         WHERE id = ${id}`;
+      if (result.length == 0) {
+        return false;
+      }
       return true;
     } catch (e) {
       console.log("Error deleting tip from database", e);
       return false;
     }
   },
+
 
   /**
    * @function    :   updateTip()
@@ -375,10 +388,15 @@ export const utils = {
    *      await updateTip(999, { ampount: "$11.11", location_id: 123});
    */
   updateTip: async (id: number, tip: any) => {
+
     try {
+      const result = await sql`SELECT FROM transactions where id = ${id}`;
       const updateResult = await sql`UPDATE transactions
         SET ${sql(tip)}
         WHERE id = ${id}`;
+      if (result.length == 0) {
+        return false;
+      }
       return true;
     } catch (e) {
       console.log("Error updating tip on database", e);
