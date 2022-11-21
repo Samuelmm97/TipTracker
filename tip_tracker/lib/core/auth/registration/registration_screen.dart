@@ -160,7 +160,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             if (!mounted) return;
                             if (loginSuccess) {
                               await Navigator.pushNamedAndRemoveUntil(
-                                  context, Routes.index, (route) => false);
+                                  context, Routes.onboarding, (route) => false);
                             }
                           }
                         },

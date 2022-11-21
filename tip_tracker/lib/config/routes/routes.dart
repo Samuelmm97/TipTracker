@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tip_tracker/core/auth/onboarding/onboarding_screen.dart';
 import 'package:tip_tracker/modules/index/index_screen.dart';
 import 'package:tip_tracker/core/auth/auth_index_screen.dart';
 import 'package:tip_tracker/core/auth/login/login_screen.dart';
@@ -15,6 +16,7 @@ class Routes {
   static String login = "/login/";
   static String register = "/register/";
   static String authIndex = "/auth/";
+  static String onboarding = "/onboarding/";
 
   /// Used to build routes for [MyApp].
   ///
@@ -26,6 +28,7 @@ class Routes {
       login: (BuildContext context) => const LoginScreen(),
       register: (BuildContext context) => const RegistrationScreen(),
       authIndex: (BuildContext context) => const AuthIndexScreen(),
+      onboarding: (BuildContext context) => const OnboardingScreen(),
       // ForgotPassword.routeName: (BuildContext context) =>
       //     ForgotPassword(),
 

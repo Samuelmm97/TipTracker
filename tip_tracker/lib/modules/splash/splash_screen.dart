@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tip_tracker/config/routes/routes.dart';
 import 'package:tip_tracker/modules/splash/cubit/splash_cubit.dart';
 
+// TODO: Check if user has been onboarded.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
 

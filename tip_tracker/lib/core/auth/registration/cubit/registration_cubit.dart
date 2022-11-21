@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_repository.dart';
-import 'package:tip_tracker/utils/helpers/response_helper.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
 part 'registration_state.dart';
 
@@ -33,10 +32,10 @@ class RegistrationCubit extends Cubit<RegistrationState> {
   ///
   /// Returns true if registration is successful, and false if unsuccessful.
   Future<bool> register() async {
-    Response? response;
     try {
       emit(Registering());
-      response = await registrationRepository.register(registrationModel);
+      Response response =
+          await registrationRepository.register(registrationModel);
       registrationModel = RegistrationModel();
       emit(Registered());
       return true;
