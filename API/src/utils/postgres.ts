@@ -18,7 +18,7 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
 const sql = postgres({
   host      : POSTGRES_HOST,
   port      : 5432,
-  database  : "refactored",
+  database  : "merged",
   //database  : "tipmate", 
   username  : POSTGRES_USER,
   password  : POSTGRES_PASSWORD,
