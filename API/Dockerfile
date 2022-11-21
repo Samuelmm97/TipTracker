@@ -1,15 +1,26 @@
-FROM node:14 as base
+FROM node:10-alpine
 
-WORKDIR /home/node/app
 
+
+# update packages
+RUN apk update
+
+# create root application folder
+WORKDIR /app
+
+# copy configs to /app folder
 COPY package*.json ./
-
-RUN npm i
-
+COPY tsconfig.json ./
 COPY . .
+# copy source code to /app/src folder
+COPY src /app/src
 
-FROM base as production
+# check files list
+RUN ls -a
 
-ENV NODE_PATH=./build
-
+RUN npm install
 RUN npm run build
+
+EXPOSE 7777
+
+CMD [ "node", "./dist/app.js" ]
