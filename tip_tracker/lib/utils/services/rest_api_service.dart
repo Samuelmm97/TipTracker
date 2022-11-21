@@ -6,6 +6,7 @@ import 'package:tip_tracker/constants/api_path.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_model.dart';
 import 'package:tip_tracker/core/auth/onboarding/cubit/onboarding_model.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
+import 'package:tip_tracker/modules/index/pages/analytics/cubit/transaction_model.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
 
 /// This service sets up the get, post methods and backend endpoints. All of
@@ -98,5 +99,27 @@ class RestApiService {
   /// Returns the response.
   static Future<Response> verifyToken() async {
     return await _get("$apiPath/verify_token");
+  }
+
+  // TIPS
+  static Future<Response> getTransactions(
+      String userId, String date, String locaton) async {
+    return await _get(
+        "$apiPath/transactions?user_id=$userId&date=$date&location=$locaton");
+  }
+
+  static Future<Response> postTransaction(
+      TransactionModel transactionModel) async {
+    return await _post("$apiPath/transactions", transactionModel.toJson());
+  }
+
+  static Future<Response> deleteTransaction(String transactionId) async {
+    return await _get("$apiPath/transactions/$transactionId");
+  }
+
+  static Future<Response> patchTransaction(
+      TransactionModel transactionModel) async {
+    return await _post("$apiPath/transactions/${transactionModel.id}",
+        transactionModel.toJson());
   }
 }
