@@ -75,6 +75,7 @@ export const utils = {
         profile.workAddress ?? null
       }, ${profile.wage}, ${profile.userId}, current_timestamp)`;
 
+      
       return true;
     } catch (e) {
       console.log("Error onboarding postgres", e);
@@ -104,10 +105,10 @@ export const utils = {
     }
   },
 
-  addTip: async (user: AuthRequestBody, amount: string) => {
+  addTip: async (email: string, amount: number) => {
     try {
       const idResult = await sql`SELECT id FROM accounts
-        WHERE email = ${user.email}`;
+        WHERE email = ${email}`;
 
       if (idResult.length == 0) {
         return false;
@@ -126,10 +127,10 @@ export const utils = {
     }
   },
 
-  getTips: async (user: AuthRequestBody, period: number) => {
+  getTips: async (email: string, period: number) => {
     try {
       const idResult = await sql`SELECT id FROM accounts
-        WHERE email = ${user.email}`;
+        WHERE email = ${email}`;
       if (idResult.length == 0) {
         return null;
       }
@@ -146,10 +147,14 @@ export const utils = {
     }
   },
 
-  deleteTip: async (user: AuthRequestBody, id: number) => {
+  deleteTip: async (id: number) => {
     try {
+      const result = await sql`SELECT FROM transactions where id = ${id}`;
       const deleteResult = await sql`DELETE FROM transactions
         WHERE id = ${id}`;
+      if (result.length == 0) {
+        return false;
+      }
       return true;
     } catch (e) {
       console.log("Error deleting tip from database", e);
@@ -157,11 +162,15 @@ export const utils = {
     }
   },
 
-  updateTip: async (user: AuthRequestBody, id: number, value: string) => {
+  updateTip: async (id: number, value: number) => {
     try {
+      const result = await sql`SELECT FROM transactions where id = ${id}`;
       const updateResult = await sql`UPDATE transactions
         SET tip_amount = ${value}::FLOAT8::NUMERIC::MONEY
         WHERE id = ${id}`;
+      if (result.length == 0) {
+        return false;
+      }
       return true;
     } catch (e) {
       console.log("Error updating tip on database", e);

@@ -5,10 +5,8 @@ import { AuthRequestBody, ProfileReqBody, VehiclePatchMode, LocationPatchMode } 
 import { Query } from "express-serve-static-core";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
-import * as jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 import { verifyJWT } from "./utils/jwt";
-import { compareSync } from "bcrypt";
-var format = require("date-fns/format");
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -37,11 +35,12 @@ app.post("/register", async (req, res) => {
   }
 
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+  const refreshToken = jwt.sign({email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
+  // TODO: Get user id from database
   res.status(201).send({message: "Registration successful."});
 } catch (error) {
   console.log(error);
@@ -61,7 +60,7 @@ app.post("/login", async (req, res) => {
   }
 
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+  const refreshToken = jwt.sign({ email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
@@ -76,17 +75,20 @@ app.post("/login", async (req, res) => {
 app.get("/verify_token", verifyJWT, async (req, res) => {
   try {
     res.status(200).send({message: "Token verified"});
-} catch (error) {
+  } catch (error) {
     res.status(500).send({message: error});
-}
-})
+  }
+});
 
 app.post("/transaction", verifyJWT, async (req, res) => {
-  const body: AuthRequestBody = req.body;
-  const params: Query = req.query;
-  let amount: string = "" + params.amount;
+  const token: string = req.header("auth-token") ?? "";
+  let amt: number = req.body.amount;
 
-  let result = await utils.addTip(body, amount);
+  if (token === "") {
+    res.status(401).send({message: "Unauthorized"});
+  }
+
+  let result = await utils.addTip(jwt.decode(token)["email"], amt);
 
   if (!result) {
     res.status(400).send({message: "Error adding tip into the system."});
@@ -95,18 +97,18 @@ app.post("/transaction", verifyJWT, async (req, res) => {
   res.status(200).send({message: "Tip entry added."});
 });
 
-app.get("/transaction", async (req, res) => {
+app.get("/transaction/:id", verifyJWT, async (req, res) => {
   try {
-    const body: AuthRequestBody = req.body;
-    const params: Query = req.query;
-    let period: number = +("" + params.period);
+    const auth_token = req.headers["auth-token"];
+    const { id } = req.params;
 
-      let result = await utils.getTips(body, period);
 
-      if (!result) {
-        res.status(404).send({message: "Tip entry does not exist."});
-        return;
-      }
+    let result = await utils.getTips(jwt.decode(auth_token)["email"], +id);
+
+    if (!result) {
+      res.status(404).send({message: "Tip entry does not exist."});
+      return;
+    }
 
     res.status(200).send({message: "Tip entry retrieved.", data: result});
   } catch (error) {
@@ -115,33 +117,30 @@ app.get("/transaction", async (req, res) => {
   }
 });
 
-app.delete("/transaction", verifyJWT, async (req, res) => {
+app.delete("/transaction/:id", verifyJWT, async (req, res) => {
   try {
-    const body: AuthRequestBody = req.body;
-    const params: Query = req.query;
-    let id: number = +("" + params.id);
+    const { id } = req.params;
 
-    let result = await utils.deleteTip(body, id);
+    let result = await utils.deleteTip(+id);
 
     if (!result) {
       res.status(404).send({message:"Tip entry does not exist."});
       return;
     }
-  res.status(200).send({message: "Tip successfully deleted."});
+    res.status(200).send({message: "Tip successfully deleted."});
   } catch (error) {
     console.log(error);
     res.status(500).send({message: error});
   }
 });
 
-app.patch("/transaction", verifyJWT, async (req, res) => {
+app.patch("/transaction/:id", verifyJWT, async (req, res) => {
   try {
-    const body: AuthRequestBody = req.body;
-    const params: Query = req.query;
-    let id: number = +("" + params.id);
-    let value: string = "" + params.value;
+    const body = req.body;
+    const {id} = req.params;
+    let value: number = body.value;
 
-    let result = await utils.updateTip(body, id, value);
+    let result = await utils.updateTip(+id, value);
 
     if (!result) {
       res.status(404).send({message: "Tip entry does not exist."});
@@ -154,7 +153,7 @@ app.patch("/transaction", verifyJWT, async (req, res) => {
   }
 });
 
-app.post("/onboarding", async (req, res) => {
+app.post("/onboarding", verifyJWT, async (req, res) => {
   const body: ProfileReqBody = req.body;
 
   let result = await utils.onboarding(body);
