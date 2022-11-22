@@ -34,6 +34,11 @@ export interface Address {
   zip_code: string;
 }
 
+export interface latlng {
+  lat: number | string;
+  lng: number | string;
+}
+
 export class Profile {
   profile_id: number = 0;
   employee_type: "mobile" | "stationary" = "mobile";

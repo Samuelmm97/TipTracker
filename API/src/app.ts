@@ -1,15 +1,16 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import express from "express";
-import { AuthRequestBody, ProfileReqBody } from "./models/models";
+import { AuthRequestBody, latlng, ProfileReqBody } from "./models/models";
 import { Query } from "express-serve-static-core";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
 const jwt = require("jsonwebtoken");
 import { verifyJWT } from "./utils/jwt";
-
+import { geo } from "./utils/geo";
 import { email } from "./utils/email";
 import { compareSync } from "bcrypt";
+import { LatLngLiteral } from "@googlemaps/google-maps-services-js";
 var format = require("date-fns/format");
 
 const DEBUG = true;
@@ -85,33 +86,32 @@ app.post("/login", async (req, res) => {
   try {
     const body: AuthRequestBody = req.body;
 
-  let result = await utils.login(body);
+    let result = await utils.login(body);
 
-  if (!result) {
-    res.status(401).send({message: "Login failed: Invalid username/password."});
+    if (!result) {
+      res.status(401).send({message: "Login failed: Invalid username/password."});
+      return;
+    }
 
-    return;
+    const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
+    const refreshToken = jwt.sign({ email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+
+    const account = await utils.getAccount(body);
+    if (account == null) {
+      throw new Error("Couldn't find account");
+    }
+    console.log(account);
+
+    res.header("auth-token", token);
+    res.header("refresh-token", refreshToken);
+
+
+    res.status(200).send({message: "Login successful", user_id: account.id, profile_id: account.profile_id});
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({message: error});
   }
-
-  const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({ email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
-
-  const account = await utils.getAccount(body);
-  if (account == null) {
-    throw new Error("Couldn't find account");
-  }
-  console.log(account);
-
-  res.header("auth-token", token);
-  res.header("refresh-token", refreshToken);
-
-
-  res.status(200).send({message: "Login successful", user_id: account.id, profile_id: account.profile_id});
-
-} catch (error) {
-  console.log(error);
-  res.status(500).send({message: error});
-}
 });
 
 app.get("/verify_token", verifyJWT, async (req, res) => {
