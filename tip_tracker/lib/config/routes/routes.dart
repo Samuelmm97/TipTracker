@@ -3,6 +3,7 @@ import 'package:tip_tracker/modules/index/index_screen.dart';
 import 'package:tip_tracker/core/auth/auth_index_screen.dart';
 import 'package:tip_tracker/core/auth/login/login_screen.dart';
 import 'package:tip_tracker/core/auth/registration/registration_screen.dart';
+import 'package:tip_tracker/core/auth/onboarding/onboarding_screen.dart';
 import 'package:tip_tracker/modules/splash/splash_screen.dart';
 import 'package:tip_tracker/main.dart';
 
@@ -14,6 +15,7 @@ class Routes {
   static String userScreen = "/user/";
   static String loginScreen = "/login/";
   static String registerScreen = "/register/";
+  static String onboardingScreen = "/onboarding/";
   static String authIndexScreen = "/auth/";
 
   /// Used to build routes for [MyApp].
@@ -25,6 +27,7 @@ class Routes {
       splashScreen: (BuildContext context) => const SplashScreen(),
       loginScreen: (BuildContext context) => const LoginScreen(),
       registerScreen: (BuildContext context) => const RegistrationScreen(),
+      onboardingScreen: (BuildContext context) => const OnboardingScreen(),
       authIndexScreen: (BuildContext context) => const AuthIndexScreen(),
       // ForgotPassword.routeName: (BuildContext context) =>
       //     ForgotPassword(),

@@ -156,7 +156,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 await BlocProvider.of<RegistrationCubit>(
                                         context)
                                     .register();
-                            // Do not use BuildContexts across async gaps (don't route without checking if this state is in the tree): https://www.flutteroverflow.dev/use-build-context-synchronously/
+                            // Do not use BuildContexts across async gaps
+                            //  (don't route without checking if this state is in the tree):
+                            //  https://www.flutteroverflow.dev/use-build-context-synchronously/
                             if (!mounted) return;
                             if (loginSuccess) {
                               await Navigator.pushNamedAndRemoveUntil(context,

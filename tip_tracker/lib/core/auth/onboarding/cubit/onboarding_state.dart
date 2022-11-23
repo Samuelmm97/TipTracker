@@ -4,4 +4,4 @@ part of 'onboarding_cubit.dart';
 abstract class OnboardingState {}
 
 /// Initial state for [OnboardingCubit].
-class OnboardingInitial extends OnboardingCubit {}
+class OnboardingInitial extends OnboardingState {}

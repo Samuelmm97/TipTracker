@@ -5,7 +5,6 @@ import 'package:tip_tracker/config/routes/routes.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_cubit.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_cubit.dart';
 
-
 void main() {
   runApp(
     MultiProvider(
