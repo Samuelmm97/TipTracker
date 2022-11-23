@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
           splashCubit.close();
         }
         return Container(
-          color: Colors.white,
+          color: const Color(0xff183A37),
           child: FlutterLogo(size: MediaQuery.of(context).size.height),
         );
       },

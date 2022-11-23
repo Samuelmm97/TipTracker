@@ -16,8 +16,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   // Used for form validation
   static final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final email = TextEditingController();
-  final password = TextEditingController();
+  static final email = TextEditingController();
+  static final password = TextEditingController();
 
   @override
   void initState() {
