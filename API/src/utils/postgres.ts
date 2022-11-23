@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import { AuthRequestBody, ProfileReqBody, VehiclePatchMode, LocationPatchMode } from "../models/models";
+import { AuthRequestBody, ProfileReqBody, Address, latlng } from "../models/models";
 import bcrypt from "bcrypt";
 import { add } from "date-fns";
 // import { Result } from "ts-postgres/dist/src/result";
@@ -18,8 +18,8 @@ if (!POSTGRES_USER || !POSTGRES_HOST || !POSTGRES_PASSWORD) {
 const sql = postgres({
   host      : POSTGRES_HOST,
   port      : 5432,
-  database  : "refactored",
-  //database  : "tipmate", 
+  database  : "prototype",
+  //database  : "refactored", 
   username  : POSTGRES_USER,
   password  : POSTGRES_PASSWORD,
   ssl       : true,
@@ -27,7 +27,7 @@ const sql = postgres({
 
 export const utils = {
   /**
-   * @function    :   registerUser()        
+   * @function registerUser()        
    *   
    * @brief   This function creates a new entry in the accounts database with the email and
    *          password provided. Before making any inserts, it will check that the email 
@@ -75,7 +75,7 @@ export const utils = {
   },
 
   /**
-   * @function    :   verifyUser()        
+   * @function verifyUser()        
    *   
    * @brief   This function updates the 'verified' value in the accounts table in the database to
    *          true for the user whose id is specified in user_id. Returns true if the update was
@@ -103,7 +103,7 @@ export const utils = {
   },
 
   /**
-   * @function    :   login()
+   * @function login()
    * 
    * @brief   This function verifies the enail and pasword in the 'user' input by looking for a 
    *          match in the database. If an account is found but not verified, or its password does
@@ -146,7 +146,7 @@ export const utils = {
   },
 
   /**
-   * @function    :   onboarding()        
+   * @function onboarding()        
    *   
    * @brief   This function adds an entry to the profiles table in the database with the info
    *          specified in 'profile'. If the workAddress component is specified, this function will
@@ -165,13 +165,13 @@ export const utils = {
    *      onboarding(profile1);
    *      await onbparding(profile2);
    */
-  onboarding: async (profile: ProfileReqBody) => {
+  onboarding: async (profile: ProfileReqBody, gcd: latlng) => {
     try {
       let location_id = null;
       if (profile.workAddress != null) {
         let a = profile.workAddress;
-        const insLocation = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code)
-        VALUES (${a.address1}, ${a.address2}, ${a.city}, ${a.state}, ${a.zip_code})
+        const insLocation = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code, lat, lng)
+        VALUES (${a.address_1}, ${a.address_2}, ${a.city}, ${a.state}, ${a.zip_code}, ${gcd.lat}, ${gcd.lng})
         RETURNING location_id`;
 
         location_id = insLocation[0].location_id;
@@ -198,7 +198,7 @@ export const utils = {
   },
 
   /**
-   * @function    :   getProfile()
+   * @function getProfile()
    * 
    * @brief   This function returns the entry in the profiles table in the db whose user_id matches
    *          the input 'userId'
@@ -223,7 +223,7 @@ export const utils = {
   },
 
   /**
-   * @function    :   updateProfile()
+   * @function updateProfile()
    * 
    * @brief   This function updates the entry in the db table profiles with any fields specified in
    *          the 'profiile' input.
@@ -252,7 +252,7 @@ export const utils = {
 
 
   /**
-   * @function    :   getAccount()
+   * @function getAccount()
    * 
    * @brief   This function returns the entry in the accounts table in the db whose id matches
    *          the email field in 'user'.
@@ -283,7 +283,7 @@ export const utils = {
   },
 
   /**
-   * @function    :   addTip()
+   * @function addTip()
    * 
    * @brief   This function 
    * 
@@ -295,11 +295,11 @@ export const utils = {
    * 
    * @example
    */
-  addTip: async (amount: string, user_id: number, location_id: number) => {
+  addTip: async (amount: string, user_id: number, location_id: number, miles_driven: number) => {
     try {
       const tipResult =
-        await sql`INSERT INTO transactions (tip_amount, user_id, location_id, tip_date) 
-        VALUES (${amount}::FLOAT8::NUMERIC::MONEY, ${user_id}, ${location_id}::BIGINT, current_timestamp)`;
+        await sql`INSERT INTO transactions (tip_amount, user_id, location_id, tip_date, miles_driven) 
+        VALUES (${amount}::FLOAT8::NUMERIC::MONEY, ${user_id}, ${location_id}::BIGINT, current_timestamp, ${miles_driven})`;
 
       return true;
     } catch (e) {
@@ -310,7 +310,7 @@ export const utils = {
 
 
   /**
-   * @function    :   getTips()
+   * @function getTips()
    * 
    * @brief   This function returns any entries in the transactions db whose user_id values match 
    *          the input 'userId' and are within the time period in days specified in the 'period' 
@@ -342,7 +342,7 @@ export const utils = {
 
 
   /**
-   * @function    :   deleteTip()
+   * @function deleteTip()
    * 
    * @brief   This function deletes the entry in the transactions table in the db whose id matches
    *          the input 'id'. Returns true if successful.
@@ -370,7 +370,7 @@ export const utils = {
 
 
   /**
-   * @function    :   updateTip()
+   * @function updateTip()
    * 
    * @nrief   This function updates the entry in the transactions db table whose id matches the 'id'
    *          input. 
@@ -387,13 +387,11 @@ export const utils = {
   updateTip: async (id: number, tip: any) => {
 
     try {
-      const result = await sql`SELECT FROM transactions where id = ${id}`;
-      const updateResult = await sql`UPDATE transactions
+      //const result = await sql`SELECT FROM transactions where id = ${id}`;
+      await sql`UPDATE transactions
         SET ${sql(tip)}
         WHERE id = ${id}`;
-      if (result.length == 0) {
-        return false;
-      }
+
       return true;
     } catch (e) {
       console.log("Error updating tip on database", e);
@@ -455,10 +453,12 @@ export const utils = {
     }
   },
 
-  addLocation: async(address_1: string, address_2: string, city: string, state: string, zip_code: string) => {
+  addLocation: async(address: Address, latlng: latlng) => {
     try {
-      const result = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code)
-        VALUES (${address_1}, ${address_2}, ${city}, ${state}, ${zip_code})
+      const a = address;
+      const l = latlng;
+      const result = await sql`INSERT INTO locations (address_1, address_2, city, state, zip_code, lat, lng)
+        VALUES (${a.address_1}, ${a.address_2}, ${a.city}, ${a.state}, ${a.zip_code}, ${l.lat}, ${l.lng})
         RETURNING location_id`;
 
       return result[0].location_id;
@@ -510,7 +510,7 @@ export const utils = {
   },
 
   /**
-   * @function    searchLocation()
+   * @function searchLocation()
    * 
    * @brief   This function searches through the locations table in the database for an entry that
    *          matches the fields specified in 'address'
@@ -544,7 +544,7 @@ export const utils = {
   },
 
   /**
-   * @function   locationUses()
+   * @function locationUses()
    * 
    * @brief   This function returns the number of transaction and profile entries in the database
    *          that use the location entry whose location_id matches the 'location_id' input.

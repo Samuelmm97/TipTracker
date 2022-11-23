@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import express from "express";
-import { AuthRequestBody, latlng, ProfileReqBody } from "./models/models";
+import { Address, AuthRequestBody, latlng, ProfileReqBody } from "./models/models";
 import { Query } from "express-serve-static-core";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
@@ -126,7 +126,8 @@ app.post("/transaction", verifyJWT, async (req, res) => {
 
   const body = req.body;
   let amount: string = body.amount;
-  const address = body.address;
+  const address: Address = body.address;
+  const miles_driven: number = body.miles_driven;
 
   let location_id = null;
   if (body.address != null) {
@@ -134,14 +135,15 @@ app.post("/transaction", verifyJWT, async (req, res) => {
     location_id = await utils.searchLocation(body.address);
     if (location_id == null) {
       console.log("Adding location");
-      location_id = await utils.addLocation(address.address_1, address.address_2, address.city, address.state, address.zip_code);
+      const gcd: latlng = await geo.geocode(address);
+      location_id = await utils.addLocation(address, gcd);
     }
   } else if (body.location_id != null) {
     location_id = body.location_id;
   }
 
   console.log("Adding tip", typeof location_id, location_id);
-  let result = await utils.addTip(amount, body.user_id, location_id);
+  let result = await utils.addTip(amount, body.user_id, location_id, miles_driven);
 
   if (!result) {
     res.status(400).send({message: "Error adding tip into the system."});
@@ -200,7 +202,7 @@ app.patch("/transaction/:id", verifyJWT, async (req, res) => {
 
     let transaction_id: number = body.transaction_id;
     let location_id: number = body.location_id;
-    let address = body.address;
+    let address: Address = body.address;
 
     if (address != null)  {
       let uses = await utils.locationUses(location_id);
@@ -211,7 +213,8 @@ app.patch("/transaction/:id", verifyJWT, async (req, res) => {
         if (search != null) {
           location_id = search.id;
         } else {
-          location_id = await utils.addLocation(address.address_1, address.address_2, address.city, address.state, address.zip_code);
+          const gcd: latlng = await geo.geocode(address);
+          location_id = await utils.addLocation(address, gcd);
         }
       }
     }
@@ -239,7 +242,14 @@ app.patch("/transaction/:id", verifyJWT, async (req, res) => {
 app.post("/onboarding", verifyJWT, async (req, res) => {
   const body: ProfileReqBody = req.body;
 
-  let result = await utils.onboarding(body);
+  let result;
+  if (body.workAddress != null) {
+    const gcd: latlng = await geo.geocode(body.workAddress);
+    result = await utils.onboarding(body, gcd);
+  } else {
+    result = await utils.onboarding(body, { lat: null, lng: null});
+  }
+  
   if (!result) {
     res.status(400).send({message: "Update user profile failed."});
     return;
@@ -331,14 +341,17 @@ app.patch("/vehicle", verifyJWT, async(req, res) => {
 
 app.post("/location", verifyJWT, async(req, res) => {
   const body = req.body;
+  const address: Address = {
+    address_1: body.address_1,
+    address_2: body.address_2,
+    city: body.city,
+    state: body.state,
+    zip_code: body.zip_code
+  };
 
-  let address_1: string = body.address_1;
-  let address_2: string = body.address_2;
-  let city: string = body.city;
-  let state: string = body.state;
-  let zip_code: string = body.zip_code;
+  let gcd: latlng = await geo.geocode(address);
 
-  let result = await utils.addLocation(address_1, address_2, city, state, zip_code);
+  let result = await utils.addLocation(address, gcd);
 
   if (!result) {
     res.sendStatus(400);
