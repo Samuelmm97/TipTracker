@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tip_tracker/core/auth/login/cubit/login_cubit.dart';
 import 'package:tip_tracker/core/auth/login/login_screen.dart';
+import 'package:tip_tracker/core/auth/onboarding/cuibit/onboarding_cubit.dart';
 import 'package:tip_tracker/core/auth/registration/registration_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -29,8 +31,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-              //  TODO cuibit BlocBuilder
-              ),
+            child: BlocBuilder<OnboardingCubit, OnboardingState>(
+                builder: (context, state) {
+              return Form(
+                  //  TODO key
+                  child: Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * .9,
+                  child: Column(children: [
+                    //  Info Text
+
+                    //  Page Icon
+
+                    //  Name Field
+
+                    //  Last Name Field
+
+                    //  Phone Number Field
+
+                    // Next Button
+                  ]),
+                ),
+              ));
+            }),
+          ),
         ),
       ),
     );
