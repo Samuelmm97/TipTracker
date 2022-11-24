@@ -57,16 +57,23 @@ app.post("/login", async (req, res) => {
 
   if (!result) {
     res.status(401).send({message: "Login failed: Invalid username/password."});
-    return;
   }
+  const account = await utils.getAccount(body);
 
+  if (account == null) {
+    res.status(401).send({message: "Login failed: Invalid username/password."});
+  } else {
   const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({_id: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+  const refreshToken = jwt.sign({ email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+
+
 
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
-  res.status(200).send({message: "Login successful."});
+
+  res.status(200).send({message: "Login successful", user_id: account.id, profile_id: account.profile_id});
+  }
 } catch (error) {
   console.log(error);
   res.status(500).send({message: error});

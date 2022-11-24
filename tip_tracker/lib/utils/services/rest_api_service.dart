@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:tip_tracker/constants/api_path.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_model.dart';
+import 'package:tip_tracker/core/auth/onboarding/cubit/onboarding_model.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
 
@@ -103,6 +104,10 @@ class RestApiService {
   /// Returns the response.
   static Future<dynamic> register(RegistrationModel registrationModel) async {
     return await _post("$apiPath/register", registrationModel.toJson());
+  }
+
+  static Future<dynamic> onboard(OnboardingModel onboardingModel) async {
+    return await _post("$apiPath/onboard", onboardingModel.toJson());
   }
 
   /// Makes a call to the token verification endpoint.

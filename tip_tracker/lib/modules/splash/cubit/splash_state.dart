@@ -6,13 +6,7 @@ class SplashInitial extends SplashState {}
 
 class SplashLoading extends SplashState {}
 
-class SplashLoaded extends SplashState {
-  final bool tokenVerified;
-
-  SplashLoaded(this.tokenVerified);
-
-  List<Object> get props => [tokenVerified];
-}
+class SplashLoaded extends SplashState {}
 
 class SplashError extends SplashState {
   SplashError(this.errorMessage);
