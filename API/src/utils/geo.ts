@@ -21,7 +21,7 @@ export const geo = {
      * 
      * @param   {Address}       address 
      * 
-     * @returns {}
+     * @returns {Promise<latlng>} a latitude and longitude pair corresponding to the address
      * 
      * @example
      *      geocode(address1);
@@ -49,7 +49,7 @@ export const geo = {
             return gcResponse.data.results[0].geometry.location;
         } catch (e) {
             console.log("Error geocoding location", e, address);
-            return { lat: null, lng: null};
+            return { lat: null, lng: null };
         }
     },
 
@@ -68,7 +68,7 @@ export const geo = {
      *      reverseGeocode(lat1, lng1);
      *      await reverseGeocode(28.5971482, -81.203793);
      */
-    reverseGeocode: async(lat: number, lng: number) => {
+    reverseGeocode: async(lat: number, lng: number): Promise<Address | null> => {
         try {
             const args: ReverseGeocodeRequest = {
                 params: {
@@ -81,11 +81,17 @@ export const geo = {
             };
 
             const rgcREsponse = await client.reverseGeocode(args);
+            const components = rgcREsponse.data.results[0].address_components;
 
-            return rgcREsponse.data.results[0].address_components;
+            return { address_1: `${components[0].long_name} ${components[1].long_name}`,
+                    address_2: ``,
+                    city: `${components[2].long_name}`,
+                    state: `${components[4].short_name}`,
+                    zip_code: `${components[6].short_name}`
+                };
         } catch (e) {
             console.log("Error reverse geocoding location", e, lat, lng);
-            return e;
+            return null;
         }
     },
 };

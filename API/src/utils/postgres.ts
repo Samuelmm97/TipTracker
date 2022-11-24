@@ -570,5 +570,25 @@ export const utils = {
       console.log("Error looking through profiles and transactions", e);
       return null;
     }
-  }
+  },
+
+  /**
+   * @function getMapData()
+   * 
+   * @brief
+   * 
+   * @returns 
+   */
+  getMapData: async() => { // Testing, refining needed
+    try {
+      const data = await sql`SELECT tip_amount, lat, lng 
+      FROM transactions, locations
+      WHERE locations.location_id = transactions.location_id`;
+
+      return data;
+    } catch (e) {
+      console.log("Error getting data for heatmap", e);
+      return [];
+    }
+  },
 };

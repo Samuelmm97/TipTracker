@@ -247,7 +247,7 @@ app.post("/onboarding", verifyJWT, async (req, res) => {
     const gcd: latlng = await geo.geocode(body.workAddress);
     result = await utils.onboarding(body, gcd);
   } else {
-    result = await utils.onboarding(body, { lat: null, lng: null});
+    result = await utils.onboarding(body, { lat: null, lng: null });
   }
   
   if (!result) {
@@ -398,6 +398,17 @@ app.patch("/location", verifyJWT, async(req, res) => {
     return;
   }
   res.sendStatus(200);
+});
+
+app.get("/map", async(req, res) => {
+  try {
+    const data = await utils.getMapData();
+
+    res.status(200).send(data);
+  } catch(e) {
+    console.log(e);
+    res.status(500).send([]); //is status correct?
+  }
 });
 
 app.listen(port, async () => {
