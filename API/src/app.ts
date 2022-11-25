@@ -1,17 +1,19 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import express from "express";
-import { AuthRequestBody, ProfileReqBody } from "./models/models";
+import { Address, AuthRequestBody, latlng, ProfileReqBody } from "./models/models";
 import { Query } from "express-serve-static-core";
 import { utils } from "./utils/postgres";
 import bodyParser from "body-parser";
 const jwt = require("jsonwebtoken");
 import { verifyJWT } from "./utils/jwt";
-
+import { geo } from "./utils/geo";
 import { email } from "./utils/email";
 import { compareSync } from "bcrypt";
+import { LatLngLiteral } from "@googlemaps/google-maps-services-js";
 var format = require("date-fns/format");
 
+const DEBUG = true;
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -84,33 +86,32 @@ app.post("/login", async (req, res) => {
   try {
     const body: AuthRequestBody = req.body;
 
-  let result = await utils.login(body);
+    let result = await utils.login(body);
 
-  if (!result) {
-    res.status(401).send({message: "Login failed: Invalid username/password."});
+    if (!result) {
+      res.status(401).send({message: "Login failed: Invalid username/password."});
+      return;
+    }
 
-    return;
+    const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
+    const refreshToken = jwt.sign({ email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+
+    const account = await utils.getAccount(body);
+    if (account == null) {
+      throw new Error("Couldn't find account");
+    }
+    console.log(account);
+
+    res.header("auth-token", token);
+    res.header("refresh-token", refreshToken);
+
+
+    res.status(200).send({message: "Login successful", user_id: account.id, profile_id: account.profile_id});
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({message: error});
   }
-
-  const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({ email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
-
-  const account = await utils.getAccount(body);
-  if (account == null) {
-    throw new Error("Couldn't find account");
-  }
-  console.log(account);
-
-  res.header("auth-token", token);
-  res.header("refresh-token", refreshToken);
-
-
-  res.status(200).send({message: "Login successful", user_id: account.id, profile_id: account.profile_id});
-
-} catch (error) {
-  console.log(error);
-  res.status(500).send({message: error});
-}
 });
 
 app.get("/verify_token", verifyJWT, async (req, res) => {
@@ -125,7 +126,8 @@ app.post("/transaction", verifyJWT, async (req, res) => {
 
   const body = req.body;
   let amount: string = body.amount;
-  const address = body.address;
+  const address: Address = body.address;
+  const miles_driven: number = body.miles_driven;
 
   let location_id = null;
   if (body.address != null) {
@@ -133,14 +135,15 @@ app.post("/transaction", verifyJWT, async (req, res) => {
     location_id = await utils.searchLocation(body.address);
     if (location_id == null) {
       console.log("Adding location");
-      location_id = await utils.addLocation(address.address_1, address.address_2, address.city, address.state, address.zip_code);
+      const gcd: latlng = await geo.geocode(address);
+      location_id = await utils.addLocation(address, gcd);
     }
   } else if (body.location_id != null) {
     location_id = body.location_id;
   }
 
   console.log("Adding tip", typeof location_id, location_id);
-  let result = await utils.addTip(amount, body.user_id, location_id);
+  let result = await utils.addTip(amount, body.user_id, location_id, miles_driven);
 
   if (!result) {
     res.status(400).send({message: "Error adding tip into the system."});
@@ -151,16 +154,18 @@ app.post("/transaction", verifyJWT, async (req, res) => {
 
 app.get("/transaction/:id", verifyJWT, async (req, res) => {
   try {
+    const params: Query = req.query;
+    const userId: number = Number(params.userId);
+    const period: number = Number(params.period);
 
-    const body = req.body;
-    let userId: number = body.userId;
-    let period: number = body.period;
+    console.log('here');
+    console.log(period);
 
     let result = await utils.getTips(userId, period);
 
-
     if (!result) {
-      res.status(404).send({message: "Tip entry does not exist."});
+      res.status(404).send({message: "Tip entry does not exist.", userId: userId, period: period, result: result});
+
       return;
     }
 
@@ -197,7 +202,7 @@ app.patch("/transaction/:id", verifyJWT, async (req, res) => {
 
     let transaction_id: number = body.transaction_id;
     let location_id: number = body.location_id;
-    let address = body.address;
+    let address: Address = body.address;
 
     if (address != null)  {
       let uses = await utils.locationUses(location_id);
@@ -208,18 +213,23 @@ app.patch("/transaction/:id", verifyJWT, async (req, res) => {
         if (search != null) {
           location_id = search.id;
         } else {
-          location_id = await utils.addLocation(address.address_1, address.address_2, address.city, address.state, address.zip_code);
+          const gcd: latlng = await geo.geocode(address);
+          location_id = await utils.addLocation(address, gcd);
         }
       }
     }
 
-    const tip = { location_id: location_id, tip_amount: body.amount };
+    const tip = { location_id: Number(location_id), tip_amount: body.tip_amount };
     console.log(tip);
     let result = await utils.updateTip(transaction_id, tip);
 
 
     if (!result) {
-      res.status(404).send({message: "Tip entry does not exist."});
+      if (DEBUG) {
+        res.status(404).send({message: "Tip does not exist", result: result});
+      } else {
+        res.status(404).send({message: "Tip does not exist"});
+      }
       return;
     }
     res.status(200).send({message: "Tip entry updated."});
@@ -232,7 +242,14 @@ app.patch("/transaction/:id", verifyJWT, async (req, res) => {
 app.post("/onboarding", verifyJWT, async (req, res) => {
   const body: ProfileReqBody = req.body;
 
-  let result = await utils.onboarding(body);
+  let result;
+  if (body.workAddress != null) {
+    const gcd: latlng = await geo.geocode(body.workAddress);
+    result = await utils.onboarding(body, gcd);
+  } else {
+    result = await utils.onboarding(body, { lat: null, lng: null });
+  }
+  
   if (!result) {
     res.status(400).send({message: "Update user profile failed."});
     return;
@@ -279,17 +296,17 @@ app.post("/vehicle", verifyJWT, async(req, res) => {
     res.sendStatus(400);
     return;
   }
-  res.send({ vehicle_id: result }).status(200);
+  res.status(200).send({ vehicle_id: result });
 });
 
 app.get("/vehicle", async(req, res) => {
-  const body = req.body;
-  let profile_id: number = body.profile_id;
+  const params: Query = req.query;
+  let profile_id: number = Number(params.profile_id);
   
   let result = await utils.getVehicle(profile_id);
 
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({result: result, profile_id: profile_id});
     return;
   }
 
@@ -324,30 +341,33 @@ app.patch("/vehicle", verifyJWT, async(req, res) => {
 
 app.post("/location", verifyJWT, async(req, res) => {
   const body = req.body;
+  const address: Address = {
+    address_1: body.address_1,
+    address_2: body.address_2,
+    city: body.city,
+    state: body.state,
+    zip_code: body.zip_code
+  };
 
-  let address_1: string = body.address_1;
-  let address_2: string = body.address_2;
-  let city: string = body.city;
-  let state: string = body.state;
-  let zip_code: string = body.zip_code;
+  let gcd: latlng = await geo.geocode(address);
 
-  let result = await utils.addLocation(address_1, address_2, city, state, zip_code);
+  let result = await utils.addLocation(address, gcd);
 
   if (!result) {
     res.sendStatus(400);
     return;
   }
-  res.send({ location_id: result }).status(200);
+  res.status(200).send({ location_id: result });
 });
 
 app.get("/location", async(req, res) => {
-  const body = req.body;
-  let location_id: number = body.location_id;
+  const params: Query = req.query;
+  let location_id: number = Number(params.location_id);
 
   let result = await utils.getLocation(location_id);
 
   if (!result) {
-    res.sendStatus(400);
+    res.status(400).send({result: result, location_id: location_id});
     return;
   }
 
@@ -378,6 +398,17 @@ app.patch("/location", verifyJWT, async(req, res) => {
     return;
   }
   res.sendStatus(200);
+});
+
+app.get("/map", async(req, res) => {
+  try {
+    const data = await utils.getMapData();
+
+    res.status(200).send(data);
+  } catch(e) {
+    console.log(e);
+    res.status(500).send([]); //is status correct?
+  }
 });
 
 app.listen(port, async () => {

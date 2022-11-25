@@ -3,14 +3,6 @@ export interface AuthRequestBody {
   password: string;
 };
 
-export enum VehiclePatchMode {
-  cost_to_own, make, model, year,
-};
-
-export enum LocationPatchMode {
-  address1, address2, city, state, zip_code,
-};
-
 export type Metric = {
   total: number;
   average: number;
@@ -27,11 +19,16 @@ export interface ProfileReqBody {
 }
 
 export interface Address {
-  address1: string;
-  address2: string; 
+  address_1: string;
+  address_2: string; 
   city: string;
   state: string;
   zip_code: string;
+}
+
+export interface latlng {
+  lat: number | null;
+  lng: number | null;
 }
 
 export class Profile {

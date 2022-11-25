@@ -44,6 +44,7 @@ export const email = {
             });
         } catch(e) {
             console.log("Error sending verification email", e);
+            return e;
         }
     }
 };
