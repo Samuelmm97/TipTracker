@@ -32,7 +32,7 @@ migrate_working_dir/
 .pub/
 /build/
 **/ios/Runner/AppDelegate.swift
-**/android/app/src/main/AndoirdManifest.xml
+**/android/app/src/main/AndroidManifest.xml
 
 # Symbolication related
 app.*.symbols
