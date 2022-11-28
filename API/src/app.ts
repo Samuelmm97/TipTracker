@@ -21,7 +21,7 @@ app.use(bodyParser.json());
 const port = process.env.PORT ?? 3000;
 const JWT_SECRET: string = process.env.JWT_SECRET ?? "";
 const REFRESH_JWT_SECRET: string = process.env.REFRESH_JWT_SECRET ?? "";
-const EMAIL_SECRET: string = process.env.EMAIL_JWT_SECRET ?? "";
+const EMAIL_SECRET: string = process.env.EMAIL_SECRET ?? "";
 
 if (JWT_SECRET === "") {
   console.log("JWT_SECRET REQUIRED");
@@ -50,17 +50,17 @@ app.post("/register", async (req, res) => {
   }
   
   let user_id = result;
-  const verifyToken = jwt.sign({ id: user_id }, EMAIL_SECRET, {expiresIn: "1d"});
-  const mail = await email.sendVerification(body.email, user_id, verifyToken);
+  const verifyToken = jwt.sign({ _id: user_id }, EMAIL_SECRET, {expiresIn: "1d"});
+  // const mail = await email.sendVerification(body.email, user_id, verifyToken);
 
-  const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+  const token = jwt.sign({ _id: user_id }, JWT_SECRET, {expiresIn: "15m"});
+  const refreshToken = jwt.sign({_id: user_id}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
   // TODO: Get user id from database
-  res.status(201).send({message: "Registration successful."});
+  res.status(201).send({message: "Registration successful.", data: {user_id: user_id}});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: String(error)});
