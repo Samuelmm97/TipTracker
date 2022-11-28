@@ -9,6 +9,10 @@ class OnboardingInitial extends OnboardingState {}
 /// Onboarding in process state for [OnboardingCubit].
 class Onboarding extends OnboardingState {}
 
+class OnboardingStationary extends OnboardingState {}
+
+class OnboardingMobile extends OnboardingState {}
+
 /// Onboarding successful state for [OnboardingCubit].
 class Onboarded extends OnboardingState {}
 

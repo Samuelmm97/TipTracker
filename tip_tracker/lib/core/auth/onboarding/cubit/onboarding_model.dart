@@ -1,14 +1,20 @@
+import 'package:tip_tracker/core/user/user_model.dart';
+
 /// This class is used to manage the data used to register the user through
 /// [OnboardingCubit].
 class OnboardingModel {
-  String email;
-  String password;
-  String confirmPassword;
+  String employeeType;
+  double? hoursPerWeek; // If stationary
+  LocationModel? workAddress; // if stationary
+  double wage;
+  int? userId;
 
   OnboardingModel({
-    this.email = "",
-    this.password = "",
-    this.confirmPassword = "",
+    this.employeeType = "stationary",
+    this.hoursPerWeek, // If stationary
+    this.workAddress, // if stationary
+    this.wage = 0,
+    this.userId = 0,
   });
 
   /// Returns this model as a JSON structure, [Map] of keys that are of type
@@ -22,8 +28,10 @@ class OnboardingModel {
   /// }
   /// ```
   Map<String, dynamic> toJson() => {
-        "email": email,
-        "password": password,
-        "confirmPassword": confirmPassword,
+        "employeeType": employeeType,
+        "hoursPerWeek": hoursPerWeek, // If stationary
+        // "workAddress": workAddress!.toJson(), // if stationary
+        "wage": wage,
+        "userId": userId,
       };
 }

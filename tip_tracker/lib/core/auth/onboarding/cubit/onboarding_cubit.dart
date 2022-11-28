@@ -26,6 +26,16 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   OnboardingModel onboardingModel = OnboardingModel();
   OnboardingRepository onboardingRepository = OnboardingRepository();
 
+  Future<void> updateEmployeeType(String employeeType) async {
+    onboardingModel.employeeType = employeeType;
+    if (employeeType == "stationary") {
+      emit(OnboardingStationary());
+    }
+    if (employeeType == "mobile") {
+      emit(OnboardingMobile());
+    }
+  }
+
   /// Attempts to onboard the user.
   ///
   /// Returns true if onboarding is successful, and false if unsuccessful.
@@ -38,11 +48,13 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       return true;
     } catch (e) {
       if (e is DioError) {
-        errorMessage = e.response!.data['message'];
-      } else if (e is SocketException) {
-        errorMessage = "Connection to server failed";
+        if (e.error is SocketException) {
+          errorMessage = "Connection to server failed";
+        } else
+          errorMessage = e.response?.data['message'];
       }
       emit(OnboardingError(errorMessage));
+      print(e);
       rethrow;
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tip_tracker/core/auth/onboarding/dob.dart';
 import 'package:tip_tracker/core/auth/onboarding/onboarding_screen.dart';
 import 'package:tip_tracker/modules/index/index_screen.dart';
 import 'package:tip_tracker/core/auth/auth_index_screen.dart';

@@ -1,244 +1,178 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tip_tracker/config/routes/routes.dart';
+import 'package:tip_tracker/core/auth/onboarding/cubit/onboarding_cubit.dart';
+import 'package:tip_tracker/config/styles/form_field_style.dart';
+import 'package:tip_tracker/modules/cubit/geolocator_cubit.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({Key? key}) : super(key: key);
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  FocusNode kb1 = FocusNode();
-  FocusNode kb2 = FocusNode();
-  FocusNode kb3 = FocusNode();
+  //  Text field controllers
+  static final wage = TextEditingController();
+  static final hoursPerWeek = TextEditingController();
+  static final workAddress = TextEditingController();
 
-  FocusNode fnode1 = FocusNode();
-  FocusNode fnode2 = FocusNode();
-  FocusNode fnode3 = FocusNode();
+  //  Page Controller
+  final PageController controller = PageController();
 
-  TextEditingController monthText = TextEditingController();
-  TextEditingController dayText = TextEditingController();
-  TextEditingController yearText = TextEditingController();
-
-  void focusDateField(FocusNode keyboardNode, FocusNode textNode) {
-    setState(() {
-      FocusScope.of(context).requestFocus(keyboardNode);
-      FocusScope.of(context).requestFocus(textNode);
-    });
+  @override
+  void initState() {
+    super.initState();
+    // TODO init controllers
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
-      child: Scaffold(
-          body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              child: GestureDetector(
-                onTap: () {
-                  if (monthText.text.length < 2) {
-                    FocusScope.of(context).unfocus();
-                    focusDateField(kb1, fnode1);
-                  } else if (dayText.text.length < 2) {
-                    FocusScope.of(context).unfocus();
-                    focusDateField(kb2, fnode2);
-                  } else if (yearText.text.length <= 4) {
-                    FocusScope.of(context).unfocus();
-                    focusDateField(kb3, fnode3);
-                  }
-                },
-                child: Container(
-                  width: 140,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: (fnode1.hasFocus ||
-                              fnode2.hasFocus ||
-                              fnode3.hasFocus)
-                          ? Border.all(color: Colors.blueAccent)
-                          : Border.all(color: Colors.black87)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      RawKeyboardListener(
-                        focusNode: kb1,
-                        onKey: (event) {
-                          if (monthText.text.length == 2 &&
-                              event is RawKeyDownEvent) {
-                            setState(() {
-                              bool found = event.data.logicalKey.keyLabel
-                                  .contains(RegExp(r'[0-9]'));
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      backgroundColor: const Color(0xff183A37),
+      body: SafeArea(
+        child: Center(
+          child: BlocBuilder<OnboardingCubit, OnboardingState>(
+              builder: (context, state) {
+            return Container(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Expanded(
+                    //  PageView
+                    child: PageView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      controller: controller,
+                      children: [userOnboarding(state)],
+                    ),
+                  ),
+                  nextButton(),
+                ],
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
 
-                              if (found && dayText.text.length < 2) {
-                                int parse =
-                                    int.parse(event.data.logicalKey.keyLabel);
-                                dayText.text += parse.toString();
-                              }
-                            });
-                          }
-                        },
-                        child: SizedBox(
-                          width: 28,
-                          child: TextFormField(
-                            textAlign: TextAlign.justify,
-                            focusNode: fnode1,
-                            controller: monthText,
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.done,
-                            onChanged: (String newVal) {
-                              if (newVal.length == 2) {
-                                fnode1.unfocus();
-                                focusDateField(kb2, fnode2);
-                              } else {
-                                // Necessary setState to update padding between
-                                // this and the proceding slash
-                                setState(() {});
-                              }
-                            },
-                            decoration: const InputDecoration(
-                              hintText: "mm",
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                            ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[0-9]'),
-                              ),
-                              LengthLimitingTextInputFormatter(2),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: monthText.text.isEmpty
-                            ? const EdgeInsets.symmetric(horizontal: 5.0)
-                            : const EdgeInsets.only(right: 5.0),
-                        child: const SizedBox(
-                          width: 5,
-                          child: Text("/"),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 20,
-                        child: RawKeyboardListener(
-                          focusNode: kb2,
-                          onKey: ((event) {
-                            if (dayText.text.length == 2 &&
-                                event is RawKeyDownEvent) {
-                              setState(() {
-                                bool found = event.data.logicalKey.keyLabel
-                                    .contains(RegExp(r'[0-9]'));
+  //  User onboarding page TODO (Other pages)
+  Widget userOnboarding(OnboardingState state) {
+    return SingleChildScrollView(
+      child: Center(
+          child: Column(
+        children: [
+          const Text(
+            'Let\'s get you set up',
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 32,
+                color: Color(0xffEFD6AC)),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 16),
+            child: Icon(
+              Icons.create,
+              size: 48,
+              color: Color(0xffEFD6AC),
+            ),
+          ),
+          const SizedBox(
+            height: 64,
+          ),
 
-                                if (found && yearText.text.length < 4) {
-                                  int parse =
-                                      int.parse(event.data.logicalKey.keyLabel);
-                                  yearText.text += parse.toString();
-                                }
-                              });
-                            } else if (event.data.logicalKey.keyLabel ==
-                                    "Backspace" &&
-                                dayText.text.isEmpty &&
-                                kb2.hasFocus &&
-                                event is RawKeyUpEvent) {
-                              fnode2.unfocus();
-                              kb2.unfocus();
-                              focusDateField(kb1, fnode1);
-                            }
-                          }),
-                          child: TextFormField(
-                            focusNode: fnode2,
-                            controller: dayText,
-                            decoration: const InputDecoration(
-                              hintText: "dd",
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                            ),
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.done,
-                            onChanged: (String newVal) {
-                              if (newVal.length == 2) {
-                                kb2.unfocus();
-                                fnode2.unfocus();
-                                focusDateField(kb3, fnode3);
-                              } else if (newVal.isEmpty) {
-                                fnode2.unfocus();
-                                kb2.unfocus();
-                                focusDateField(kb1, fnode1);
-                              }
-                            },
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[0-9]'),
-                              ),
-                              LengthLimitingTextInputFormatter(2),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.all(5.0),
-                        child: SizedBox(
-                          width: 5,
-                          child: Text("/"),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 40,
-                        child: RawKeyboardListener(
-                          focusNode: kb3,
-                          onKey: ((event) {
-                            if (event.data.logicalKey.keyLabel == "Backspace" &&
-                                yearText.text.isEmpty &&
-                                kb3.hasFocus &&
-                                event is RawKeyUpEvent) {
-                              fnode3.unfocus();
-                              kb3.unfocus();
-                              focusDateField(kb2, fnode2);
-                            }
-                          }),
-                          child: TextFormField(
-                            controller: yearText,
-                            focusNode: fnode3,
-                            decoration: const InputDecoration(
-                              hintText: "yyyy",
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                            ),
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.done,
-                            onChanged: (String newVal) {
-                              if (newVal.length == 4) {
-                                fnode3.unfocus();
-                                kb3.unfocus();
-                              } else if (newVal.isEmpty) {
-                                fnode3.unfocus();
-                                kb3.unfocus();
-                                focusDateField(kb2, fnode2);
-                              }
-                            },
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[0-9]'),
-                              ),
-                              LengthLimitingTextInputFormatter(4),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+          //  First Name text field
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: MaterialButton(
+                child: Text("Stationary"),
+                onPressed: () => BlocProvider.of<OnboardingCubit>(context)
+                    .updateEmployeeType("stationary"),
+              )),
+
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: MaterialButton(
+                  child: Text("Mobile"),
+                  onPressed: () {
+                    BlocProvider.of<OnboardingCubit>(context)
+                        .updateEmployeeType("mobile");
+                    BlocProvider.of<GeolocatorCubit>(context)
+                        .getCurrentPosition();
+                  })),
+
+          if (state is OnboardingStationary)
+            Column(
+              children: [
+                //  hoursPerWeek text field
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: TextFormField(
+                    controller: hoursPerWeek,
+                    style: formFieldTextStyle,
+                    decoration: FormFieldInputDecoration('Hours per week'),
+                    onChanged: ((value) =>
+                        BlocProvider.of<OnboardingCubit>(context)
+                            .onboardingModel
+                            .hoursPerWeek = double.parse(value)),
                   ),
                 ),
+
+                // Wage text field
+                Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
+                    child: TextFormField(
+                      controller: wage,
+                      style: formFieldTextStyle,
+                      decoration: FormFieldInputDecoration('Wage'),
+                      onChanged: ((value) =>
+                          BlocProvider.of<OnboardingCubit>(context)
+                              .onboardingModel
+                              .wage = double.parse(value)),
+                    )),
+              ],
+            )
+        ],
+      )),
+    );
+  }
+
+  //  Next button widget
+  Widget nextButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(64, 32, 64, 16),
+      child: MaterialButton(
+        //On tap move to next page if on last page submit
+        onPressed: () async {
+          bool success =
+              await BlocProvider.of<OnboardingCubit>(context).onboard();
+          if (!mounted) return;
+          if (success) {
+            await Navigator.pushNamedAndRemoveUntil(
+                context, Routes.index, (route) => false);
+          }
+        },
+        // Button Design
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xff0BFF4F)),
+              borderRadius: BorderRadius.circular(16)),
+          child: const Center(
+            child: Text(
+              'Next',
+              style: TextStyle(
+                color: Color(0xff0BFF4F),
+                fontSize: 24,
               ),
             ),
-          ],
+          ),
         ),
-      )),
+      ),
     );
   }
 }

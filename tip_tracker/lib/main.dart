@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tip_tracker/config/routes/routes.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_cubit.dart';
+import 'package:tip_tracker/core/auth/onboarding/cubit/onboarding_cubit.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_cubit.dart';
 import 'package:tip_tracker/modules/cubit/geolocator_cubit.dart';
 
@@ -19,6 +20,9 @@ void main() {
         Provider<GeolocatorCubit>(
           create: (_) => GeolocatorCubit(),
         ),
+        Provider<OnboardingCubit>(
+          create: (context) => OnboardingCubit(),
+        )
       ],
       child: const MyApp(),
     ),

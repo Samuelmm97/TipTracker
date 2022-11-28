@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tip_tracker/config/routes/routes.dart';
+import 'package:tip_tracker/modules/cubit/geolocator_cubit.dart';
 import 'package:tip_tracker/modules/splash/cubit/splash_cubit.dart';
 
 // TODO: Check if user has been onboarded.
@@ -26,6 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return BlocBuilder<SplashCubit, SplashState>(
       bloc: splashCubit,
       builder: (context, state) {
+        BlocProvider.of<GeolocatorCubit>(context).getCurrentPosition();
         if (state is SplashLoaded) {
           SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
             Navigator.pushNamedAndRemoveUntil(
