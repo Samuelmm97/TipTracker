@@ -275,7 +275,7 @@ app.get("/profile/:userId", async (req, res) => {
     res.status(404).send({message: "User profile not found."});
     return;
   }
-  res.status(200).send({data: JSON.stringify(result), message: "User profile retrieved successfully."});
+  res.status(200).send({data: result, message: "User profile retrieved successfully."});
 });
 
 app.put("/profile/:userId", async (req, res) => {
