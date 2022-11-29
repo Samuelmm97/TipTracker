@@ -51,22 +51,25 @@ export const geo = {
      * @brief   This function takes a latitude and longitude, and returns the address corresponding
      *          to it using the Google Maps Geocoding API.
      * 
-     * @param   {number}    lat 
-     * @param   {number}    lng 
+     * @param   {latlng} latlng
      * 
      * @returns {}
      * 
      * @example
      *      await reverseGeocode(28.5971482, -81.203793);
      */
-    reverseGeocode: async(lat: number, lng: number): Promise<Address | null> => {
+    reverseGeocode: async(latlng: latlng): Promise<Address> => {
         try {
+            if (latlng.lat == null || latlng.lng == null) {
+                throw new Error("latlng has a null field");
+            }
+
             const args: ReverseGeocodeRequest = {
                 params: {
                     key: String(process.env.GOOGLE_API_KEY),
                     latlng: {
-                        lat: lat,
-                        lng: lng,
+                        lat: latlng.lat,
+                        lng: latlng.lng,
                     },
                 }
             };
@@ -81,8 +84,8 @@ export const geo = {
                     zip_code: `${components[6].short_name}`
                 };
         } catch (e) {
-            console.log("Error reverse geocoding location", e, lat, lng);
-            return null;
+            console.log("Error reverse geocoding location", e, latlng.lat, latlng.lng);
+            return {address_1: "", address_2: "", city: "", state: "", zip_code: ""};
         }
     },
 };

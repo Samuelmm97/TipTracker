@@ -127,12 +127,21 @@ app.post("/transaction", verifyJWT, async (req, res) => {
   const body = req.body;
   let amount: string = body.amount;
   const address: Address = body.address;
+  const latlng: latlng = body.latlng;
   const miles_driven: number = body.miles_driven;
 
   let location_id = null;
-  if (body.address != null) {
+  if (latlng != null) {
     console.log("searching in db");
-    location_id = await utils.searchLocation(body.address);
+    location_id = await utils.searchLocationGeo(latlng);
+    if (location_id == null) {
+      console.log("Adding location");
+      const address: Address = await geo.reverseGeocode(latlng);
+      location_id = await utils.addLocation(address, latlng);
+    }
+  } else if (address != null) {
+    console.log("searching in db");
+    location_id = await utils.searchLocation(address);
     if (location_id == null) {
       console.log("Adding location");
       const gcd: latlng = await geo.geocode(address);

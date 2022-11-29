@@ -659,6 +659,23 @@ export const utils = {
     }
   },
 
+  searchLocationGeo: async(latlng: latlng) => {
+    try {
+      const result = await sql`SELECT * FROM locations
+      WHERE lat = ${latlng.lat}
+      AND lng = ${latlng.lng}`;
+
+      if (result.length == 0) {
+        return null;
+      }
+
+      return result[0].location_id;
+    } catch (e) {
+      console.log("Error searching for lat and long in database", e);
+      return null;
+    }
+  },
+
   /**
    * @function locationUses()
    * 
