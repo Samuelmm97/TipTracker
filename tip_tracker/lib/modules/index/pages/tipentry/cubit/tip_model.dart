@@ -3,6 +3,7 @@ import 'package:tip_tracker/core/user/user_model.dart';
 class TipEntryModel {
   int userId;
   LocationModel? address;
+  Map<String, dynamic>? latlng = {};
   double amount;
 
   TipEntryModel({
@@ -22,6 +23,7 @@ class TipEntryModel {
   Map<String, dynamic> toJson() => {
         "user_id": userId,
         "amount": amount,
+        "latlng": latlng,
         "address": address?.toJson(),
       };
 }

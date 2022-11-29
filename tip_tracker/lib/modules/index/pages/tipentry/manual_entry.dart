@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tip_tracker/modules/cubit/geolocator_cubit.dart';
 import 'package:tip_tracker/modules/index/pages/tipentry/cubit/tip_cubit.dart';
 
 class ManualEntry extends StatefulWidget {
@@ -69,8 +70,13 @@ class _ManualEntryState extends State<ManualEntry> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(72, 24, 72, 16),
       child: GestureDetector(
-        onTap: () {
-          BlocProvider.of<TipEntryCubit>(context).addTip();
+        onTap: () async {
+          GeolocatorCubit geoCubit = BlocProvider.of<GeolocatorCubit>(context);
+          BlocProvider.of<TipEntryCubit>(context).tipEntryModel.latlng!["lat"] =
+              geoCubit.position?.latitude;
+          BlocProvider.of<TipEntryCubit>(context).tipEntryModel.latlng!["lng"] =
+              geoCubit.position?.longitude;
+          await BlocProvider.of<TipEntryCubit>(context).addTip();
         },
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
