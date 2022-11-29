@@ -101,7 +101,14 @@ class RestApiService {
     return await _get("$apiPath/verify_token");
   }
 
+  /// Makes a call to the token verification endpoint.
+  ///
+  /// Returns the response.
+  static Future<Response> getProfile(int userId) async {
+    return await _get("$apiPath/profile/?userId");
+
   static Future<Response> addTip(TipEntryModel tipEntryModel) async {
     return await _post("$apiPath/transaction", tipEntryModel.toJson());
+
   }
 }

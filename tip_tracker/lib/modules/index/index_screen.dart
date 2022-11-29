@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tip_tracker/modules/index/pages/tipentry/manual_entry.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tip_tracker/modules/index/pages/map/map_page.dart';
-import 'package:tip_tracker/modules/index/pages/user_page.dart';
+import 'package:tip_tracker/modules/index/pages/Profile/user_page.dart';
 
 class IndexScreen extends StatefulWidget {
   const IndexScreen({Key? key}) : super(key: key);
