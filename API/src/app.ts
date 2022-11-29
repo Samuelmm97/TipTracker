@@ -21,7 +21,7 @@ app.use(bodyParser.json());
 const port = process.env.PORT ?? 3000;
 const JWT_SECRET: string = process.env.JWT_SECRET ?? "";
 const REFRESH_JWT_SECRET: string = process.env.REFRESH_JWT_SECRET ?? "";
-const EMAIL_SECRET: string = process.env.EMAIL_JWT_SECRET ?? "";
+const EMAIL_SECRET: string = process.env.EMAIL_SECRET ?? "";
 
 if (JWT_SECRET === "") {
   console.log("JWT_SECRET REQUIRED");
@@ -50,17 +50,17 @@ app.post("/register", async (req, res) => {
   }
   
   let user_id = result;
-  const verifyToken = jwt.sign({ id: user_id }, EMAIL_SECRET, {expiresIn: "1d"});
-  const mail = await email.sendVerification(body.email, user_id, verifyToken);
+  const verifyToken = jwt.sign({ _id: user_id }, EMAIL_SECRET, {expiresIn: "1d"});
+  // const mail = await email.sendVerification(body.email, user_id, verifyToken);
 
-  const token = jwt.sign({ email: body.email }, JWT_SECRET, {expiresIn: "15m"});
-  const refreshToken = jwt.sign({email: body.email}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
+  const token = jwt.sign({ _id: user_id }, JWT_SECRET, {expiresIn: "15m"});
+  const refreshToken = jwt.sign({_id: user_id}, REFRESH_JWT_SECRET, {expiresIn: "7d"});
 
   res.header("auth-token", token);
   res.header("refresh-token", refreshToken);
 
   // TODO: Get user id from database
-  res.status(201).send({message: "Registration successful."});
+  res.status(201).send({message: "Registration successful.", data: {user_id: user_id}});
 } catch (error) {
   console.log(error);
   res.status(500).send({message: String(error)});
@@ -127,12 +127,21 @@ app.post("/transaction", verifyJWT, async (req, res) => {
   const body = req.body;
   let amount: string = body.amount;
   const address: Address = body.address;
+  const latlng: latlng = body.latlng;
   const miles_driven: number = body.miles_driven;
 
   let location_id = null;
-  if (body.address != null) {
+  if (latlng != null) {
     console.log("searching in db");
-    location_id = await utils.searchLocation(body.address);
+    location_id = await utils.searchLocationGeo(latlng);
+    if (location_id == null) {
+      console.log("Adding location");
+      const address: Address = await geo.reverseGeocode(latlng);
+      location_id = await utils.addLocation(address, latlng);
+    }
+  } else if (address != null) {
+    console.log("searching in db");
+    location_id = await utils.searchLocation(address);
     if (location_id == null) {
       console.log("Adding location");
       const gcd: latlng = await geo.geocode(address);
@@ -286,11 +295,13 @@ app.post("/vehicle", verifyJWT, async(req, res) => {
 
   let profile_id: number = body.profile_id;
   let cost_to_own: number = body.cost_to_own;
-  let make: string = body.make;
-  let model: string = body.model;
-  let year: number = body.year;
+  const car = {
+    make: body.make,
+    model: body.model,
+    year: body.year
+  };
 
-  let result = await utils.addVehicle(profile_id, cost_to_own, make, model, year);
+  let result = await utils.addVehicle(profile_id, cost_to_own, car);
 
   if (!result) {
     res.sendStatus(400);

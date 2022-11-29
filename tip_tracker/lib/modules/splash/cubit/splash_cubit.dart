@@ -33,9 +33,10 @@ class SplashCubit extends Cubit<SplashState> {
       emit(SplashLoaded());
     } catch (e) {
       if (e is DioError) {
-        errorMessage = e.response!.data['message'];
-      } else if (e is SocketException) {
-        errorMessage = "Connection to server failed";
+        if (e.error is SocketException) {
+          errorMessage = "Connection to server failed";
+        } else
+          errorMessage = e.response?.data['message'];
       }
       emit(SplashError(errorMessage));
       rethrow;

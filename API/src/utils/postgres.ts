@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import { AuthRequestBody, ProfileReqBody, Address, latlng } from "../models/models";
+import { AuthRequestBody, ProfileReqBody, Car, Address, latlng } from "../models/models";
 import bcrypt from "bcrypt";
 import { add } from "date-fns";
 // import { Result } from "ts-postgres/dist/src/result";
@@ -39,8 +39,7 @@ export const utils = {
    * @return  {number}    user_id
    * 
    * @example
-   *      registerUser({ email: "example@example.com", password: "123SafePassword" });
-   *      await registerUser(user2);
+   *      await registerUser({ email: "example@example.com", password: "123SafePassword" });
    */
   registerUser: async (user: AuthRequestBody) => {
     try {
@@ -86,7 +85,6 @@ export const utils = {
    * @return  {Boolean}
    * 
    * @example
-   *      verifyUser(1);
    *      await verifyUser(90);
    */
   verifyUser: async(user_id: number) => {
@@ -114,7 +112,6 @@ export const utils = {
    * @returns {String}
    * 
    * @example
-   *      login(user1)
    *      await login({ email: "example@aol.com", password: "111111111111" });
    */
   login: async (user: AuthRequestBody) => {
@@ -159,11 +156,10 @@ export const utils = {
    * @param   {ProfileReqBody}    profile    interface with profile info*
    *                                       * see '/API/src/models/models.ts'
    * 
-   * @return  Boolean
+   * @return  {Boolean}
    * 
    * @example
-   *      onboarding(profile1);
-   *      await onbparding(profile2);
+   *      await onbparding(profile1);
    */
   onboarding: async (profile: ProfileReqBody, gcd: latlng) => {
     try {
@@ -208,7 +204,6 @@ export const utils = {
    * @returns   {}
    * 
    * @example
-   *      getProfile(17);
    *      await getProfile(100);
    */
   getProfile: async (userId: string) => {
@@ -234,8 +229,7 @@ export const utils = {
    * @returns   {boolean}
    * 
    * @example
-   *       updateProfile(18, { first_name: "Mark", hours_per_week: 14 });
-   *       await updateProfile(19, profile1);
+   *       await updateProfile(19, { first_name: "Mark", hours_per_week: 14 });
    */
   updateProfile: async (userId: string, profile: any) => {
     try {
@@ -262,7 +256,6 @@ export const utils = {
    * @returns {}
    * 
    * @example
-   *      getAccount(user1);
    *      await getAccount({ email: "123@gmail.com", password: "0987654" });
    */
   getAccount: async(user: AuthRequestBody) => {
@@ -285,7 +278,7 @@ export const utils = {
   /**
    * @function addTip()
    * 
-   * @brief   This function 
+   * @brief   This function inserts a tip into the database.
    * 
    * @param   {string}    amount 
    * @param   {number}    user_id
@@ -294,6 +287,7 @@ export const utils = {
    * @returns {Boolean}
    * 
    * @example
+   *      await addTip("$23.12", 22, 42, 0);
    */
   addTip: async (amount: string, user_id: number, location_id: number, miles_driven: number) => {
     try {
@@ -352,10 +346,8 @@ export const utils = {
    * @returns  {Boolean}
    * 
    * @example
-   *      deleteTip(142);
    *      await deleteTip(5);
    */
-
   deleteTip: async (id: number) => {
     try {
       const result = await sql`SELECT FROM transactions where id = ${id}`;
@@ -376,12 +368,11 @@ export const utils = {
    *          input. 
    * 
    * @param   {number}    id 
-   * @param   {any}   tip
+   * @param   {any}       tip
    * 
    * @returns {Boolean}
    * 
    * @example
-   *      updateTip(88, { amount: "$12.90" });
    *      await updateTip(999, { ampount: "$11.11", location_id: 123});
    */
   updateTip: async (id: number, tip: any) => {
@@ -399,10 +390,25 @@ export const utils = {
     }
   },
 
-  addVehicle: async (profile_id: number, cost_to_own: number, make: string, model: string, year: number) => {
+  /**
+   * @function addVehicle()
+   * 
+   * @brief   This function inserts a vehicle in the vehicle database table with the data specified
+   *          by the inputs 'profile_id', 'cost_to_own' and 'car'.
+   * 
+   * @param   {number}    profile_id 
+   * @param   {number}    cost_to_own 
+   * @param   {Car}       car
+   * 
+   * @returns 
+   * 
+   * @example
+   *      await addVehicle(16, 55.34, { make: "Honda", model: "Civic", year: "2011" });
+   */
+  addVehicle: async (profile_id: number, cost_to_own: number, car: Car) => {
     try {
       const result = await sql`INSERT INTO vehicles (profile_id, cost_to_own, make, model, year)
-      VALUES (${profile_id}::BIGINT, ${cost_to_own}::FLOAT8::NUMERIC::MONEY, ${make}, ${model}, ${year}::INT)
+      VALUES (${profile_id}::BIGINT, ${cost_to_own}::FLOAT8::NUMERIC::MONEY, ${car.make}, ${car.model}, ${car.year}::INT)
       RETURNING vehicle_id`;
 
       return result[0].vehicle_id;
@@ -412,6 +418,19 @@ export const utils = {
     }
   },
 
+  /**
+   * @function getVehicle()
+   * 
+   * @brief   This function returns the entry in the vehicles database table whose profile_id
+   *          matches the input 'profile_id'.
+   * 
+   * @param   {number}    profile_id 
+   * 
+   * @returns 
+   * 
+   * @example
+   *      await getVehicle(12);
+   */
   getVehicle: async(profile_id: number) => {
     try {
       const vehicleResult = await sql`SELECT * FROM vehicles
@@ -428,6 +447,19 @@ export const utils = {
     }
   },
 
+  /**
+   * @function deleteVehicle()
+   * 
+   * @brief   This function deletes the entry in the vehicles database table whose vehicle_id
+   *          matches the input 'vehicle_id'.
+   * 
+   * @param   {number}    vehicle_id 
+   * 
+   * @returns {Boolean}
+   * 
+   * @example
+   *      await deleteVehicle(12);
+   */
   deleteVehicle: async(vehicle_id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM vehicles
@@ -440,7 +472,22 @@ export const utils = {
     }
   },
 
-  patchVehicle:async (vehicle_id: number, vehicle: any) => {
+  /**
+   * @function patchVehicle()
+   * 
+   * @brief   This function updates an entry in the vehicles database table whose vehicle_id matches
+   *          the input 'vehicle_id'. The fields updated are specified in the 'vehicle' input.
+   * 
+   * @param   {number}    vehicle_id 
+   * @param   {any}       vehicle 
+   * 
+   * @returns 
+   * 
+   * @example
+   *      await patchVehicle(12, { make: "Toyota" });
+   *      await patchVehicle(91, { model: "Civic", year: "2014" });
+   */
+  patchVehicle: async (vehicle_id: number, vehicle: any) => {
     try {
       const result = await sql`UPDATE vehicles
         SET ${sql(vehicle)}
@@ -453,6 +500,29 @@ export const utils = {
     }
   },
 
+  /**
+   * @function addLocation()
+   * 
+   * @brief   This function inserts a location in the locations database table with the data
+   *          specified in the 'address' and 'latlng' inputs.
+   * 
+   * @param   {Address}   address 
+   * @param   {latlng}    latlng 
+   * 
+   * @returns 
+   * 
+   * @example
+   *      await addLocation(address1, latlng1);
+   *      await addLocation( {
+   *          address_1: "100 road way",
+   *          address_2: "",
+   *          city: "Miami",
+   *          state: "FL",
+   *          zip_code: "22222"}, {
+   *          lat: 14.234,
+   *          lng: -8.123
+   *      })
+   */
   addLocation: async(address: Address, latlng: latlng) => {
     try {
       const a = address;
@@ -468,6 +538,19 @@ export const utils = {
     }
   },
 
+  /**
+   * @function getLocation()
+   * 
+   * @brief   This function returns the entry in the locations table in the database whose
+   *          location_id matches the input 'location_id'.
+   * 
+   * @param   {number}    location_id 
+   * 
+   * @returns {}
+   * 
+   * @example
+   *      await getLocation(14);
+   */
   getLocation: async(location_id: number) => {
     try {
       const locationResult = await sql`SELECT * FROM locations
@@ -484,6 +567,19 @@ export const utils = {
     }
   },
 
+  /**
+   * @function deleteLocation()
+   * 
+   * @brief   This function deletes a location in the database whose location_id matches the input
+   *          'location_id'
+   * 
+   * @param   {number}    location_id
+   * 
+   * @returns {Boolean}
+   * 
+   * @example
+   *      await deleteLocation(14);
+   */
   deleteLocation: async(location_id: number) => {
     try {
       const deleteResult = await sql`DELETE FROM locations
@@ -496,6 +592,22 @@ export const utils = {
     }
   },
 
+  /**
+   * @function patchLocation()
+   * 
+   * @brief   This function updates an entry in the locations database table whose location_id
+   *          matches the input 'location_id'. The updates occur on the fields specified by the
+   *          input 'location'
+   * 
+   * @param   {number}    location_id 
+   * @param   {any}       location 
+   * 
+   * @returns {Boolean}
+   * 
+   * @example
+   *      await patchLocation(53, { address_2: "Apt 404", zip_code: "55555" });
+   *      await patchLocation(44, { city: "Ocala" });
+   */
   patchLocation: async(location_id: number, location: any) => {
     try {
       const updateResult = await sql`UPDATE locations
@@ -520,8 +632,12 @@ export const utils = {
    * @returns {number}
    * 
    * @example
-   *      searchLocation({ address_1: "123 ne street", address_2: "", city: "Orlando", zip_code: "33333"});
-   *      await searchLocation(profile2);
+   *      await searchLocation(profile1);
+   *      await searchLocation({ address_1: "123 ne street", 
+   *          address_2: "", 
+   *          city: "Orlando",
+   *          zip_code: "33333" 
+   *      });
    */
   searchLocation: async(address: any) => {
     try {
@@ -543,6 +659,23 @@ export const utils = {
     }
   },
 
+  searchLocationGeo: async(latlng: latlng) => {
+    try {
+      const result = await sql`SELECT * FROM locations
+      WHERE lat = ${latlng.lat}
+      AND lng = ${latlng.lng}`;
+
+      if (result.length == 0) {
+        return null;
+      }
+
+      return result[0].location_id;
+    } catch (e) {
+      console.log("Error searching for lat and long in database", e);
+      return null;
+    }
+  },
+
   /**
    * @function locationUses()
    * 
@@ -554,7 +687,6 @@ export const utils = {
    * @returns {number}
    * 
    * @example
-   *      locationUses(15);
    *      await locationUses(77);
    */
   locationUses: async(location_id: number) => {
@@ -575,9 +707,13 @@ export const utils = {
   /**
    * @function getMapData()
    * 
-   * @brief
+   * @brief   This function returns the tip amount and location (latitude and longitude) of all the
+   *          tips currently in the db.
    * 
-   * @returns 
+   * @returns {}
+   * 
+   * @example
+   *      await getMapData()
    */
   getMapData: async() => { // Testing, refining needed
     try {

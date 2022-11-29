@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tip_tracker/modules/index/pages/manual_entry.dart';
+import 'package:tip_tracker/modules/index/pages/tipentry/manual_entry.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tip_tracker/modules/index/pages/map/map_page.dart';
 import 'package:tip_tracker/modules/index/pages/Profile/user_page.dart';

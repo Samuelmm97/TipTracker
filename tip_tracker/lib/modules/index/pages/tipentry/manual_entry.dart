@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tip_tracker/modules/cubit/geolocator_cubit.dart';
+import 'package:tip_tracker/modules/index/pages/tipentry/cubit/tip_cubit.dart';
 
 class ManualEntry extends StatefulWidget {
   const ManualEntry({Key? key}) : super(key: key);
@@ -11,14 +14,6 @@ class ManualEntry extends StatefulWidget {
 //  List of options for the toggle buttons
 final List<Widget> options = <Widget>[
   Text(
-    'Miles',
-    style: GoogleFonts.jost(
-      fontSize: 18,
-      fontWeight: FontWeight.w500,
-      color: const Color(0xff04151F),
-    ),
-  ),
-  Text(
     'Tips',
     style: GoogleFonts.jost(
       fontSize: 18,
@@ -26,14 +21,6 @@ final List<Widget> options = <Widget>[
       color: const Color(0xff04151F),
     ),
   ),
-  Text(
-    'Hours',
-    style: GoogleFonts.jost(
-      fontSize: 18,
-      fontWeight: FontWeight.w500,
-      color: const Color(0xff04151F),
-    ),
-  )
 ];
 
 // Labels for manual input
@@ -44,8 +31,6 @@ final List<String> _label = ["mi", "\$", "hrs"];
 final List<int> numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, -1, 0, -1];
 
 class _ManualEntryState extends State<ManualEntry> {
-  final List<bool> _selectedOption = <bool>[false, true, false];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,28 +41,6 @@ class _ManualEntryState extends State<ManualEntry> {
           backgroundColor: Colors.transparent,
           elevation: 0.0,
           centerTitle: true,
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ToggleButtons(
-                  direction: Axis.horizontal,
-                  onPressed: (int index) {
-                    setState(() {
-                      for (int i = 0; i < _selectedOption.length; i++) {
-                        _selectedOption[i] = i == index;
-                      }
-                      _val = '0';
-                    });
-                  },
-                  renderBorder: false,
-                  selectedColor: const Color(0xff183A37),
-                  fillColor: const Color(0xffEFD6AC),
-                  constraints: BoxConstraints(
-                      minWidth: (MediaQuery.of(context).size.width - 36) / 6),
-                  isSelected: _selectedOption,
-                  children: options)
-            ],
-          ),
         ),
 
         //  Body
@@ -85,41 +48,14 @@ class _ManualEntryState extends State<ManualEntry> {
             child: Column(
           children: [
             //  Input text fields
-            (_selectedOption.indexOf(true) == 1)
-                ? Text(
-                    "${_label[_selectedOption.indexOf(true)]}" "${_val}",
-                    style: GoogleFonts.jost(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xffEFD6AC),
-                    ),
-                  )
-                : Text(
-                    "${_val}" " ${_label[_selectedOption.indexOf(true)]}",
-                    style: GoogleFonts.jost(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xffEFD6AC),
-                    ),
-                  ),
-            //  Total text fields
-            (_selectedOption.indexOf(true) == 1)
-                ? Text(
-                    "${_label[_selectedOption.indexOf(true)]}" "${_total}",
-                    style: GoogleFonts.jost(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xffEFD6AC),
-                    ),
-                  )
-                : Text(
-                    "${_total}" " ${_label[_selectedOption.indexOf(true)]}",
-                    style: GoogleFonts.jost(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xffEFD6AC),
-                    ),
-                  ),
+            Text(
+              "${_label[1]}" "${_val}",
+              style: GoogleFonts.jost(
+                fontSize: 52,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xffEFD6AC),
+              ),
+            ),
             const SizedBox(
               height: 30,
             ),
@@ -134,8 +70,14 @@ class _ManualEntryState extends State<ManualEntry> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(72, 24, 72, 16),
       child: GestureDetector(
-        //On tap Submit info to DataBase (TODO)
-
+        onTap: () async {
+          GeolocatorCubit geoCubit = BlocProvider.of<GeolocatorCubit>(context);
+          BlocProvider.of<TipEntryCubit>(context).tipEntryModel.latlng!["lat"] =
+              geoCubit.position?.latitude;
+          BlocProvider.of<TipEntryCubit>(context).tipEntryModel.latlng!["lng"] =
+              geoCubit.position?.longitude;
+          await BlocProvider.of<TipEntryCubit>(context).addTip();
+        },
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           decoration: BoxDecoration(
@@ -214,6 +156,8 @@ class _ManualEntryState extends State<ManualEntry> {
                 if (_val.length < MAXDIG && canAdd)
                   setState(() => _val = '$_val$number');
               }
+              BlocProvider.of<TipEntryCubit>(context).tipEntryModel.amount =
+                  double.parse(_val);
             },
 
             //  Buttons Design
