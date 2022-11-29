@@ -4,13 +4,6 @@ import {Address, latlng} from "../models/models";
 
 const client = new Client();
 
-/**
- * TODO:
- * fix api to fit prototype db (done)
- * geocode all locations (done)
- * add "return by proximity" function
- */
-
 export const geo = {
 
     /**
@@ -24,7 +17,6 @@ export const geo = {
      * @returns {Promise<latlng>} a latitude and longitude pair corresponding to the address
      * 
      * @example
-     *      geocode(address1);
      *      await geocode({
      *          address_1: "4000 Central Florida Blvd",
      *          address_2: "",
@@ -65,7 +57,6 @@ export const geo = {
      * @returns {}
      * 
      * @example
-     *      reverseGeocode(lat1, lng1);
      *      await reverseGeocode(28.5971482, -81.203793);
      */
     reverseGeocode: async(lat: number, lng: number): Promise<Address | null> => {

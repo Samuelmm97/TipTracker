@@ -286,11 +286,13 @@ app.post("/vehicle", verifyJWT, async(req, res) => {
 
   let profile_id: number = body.profile_id;
   let cost_to_own: number = body.cost_to_own;
-  let make: string = body.make;
-  let model: string = body.model;
-  let year: number = body.year;
+  const car = {
+    make: body.make,
+    model: body.model,
+    year: body.year
+  };
 
-  let result = await utils.addVehicle(profile_id, cost_to_own, make, model, year);
+  let result = await utils.addVehicle(profile_id, cost_to_own, car);
 
   if (!result) {
     res.sendStatus(400);
