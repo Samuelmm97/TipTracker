@@ -99,4 +99,10 @@ class RestApiService {
   static Future<Response> verifyToken() async {
     return await _get("$apiPath/verify_token");
   }
+  /// Makes a call to the token verification endpoint.
+  ///
+  /// Returns the response.
+  static Future<Response> getProfile(int userId) async {
+    return await _get("$apiPath/profile/?userId");
+  }
 }
