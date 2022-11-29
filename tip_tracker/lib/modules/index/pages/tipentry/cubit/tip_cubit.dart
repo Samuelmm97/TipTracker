@@ -10,7 +10,7 @@ class TipEntryCubit extends Cubit<TipEntryState> {
   TipEntryModel tipEntryModel = TipEntryModel();
   TipEntryRepository tipEntryRepository = TipEntryRepository();
 
-  void addTip() async {
+  Future<void> addTip() async {
     emit(TipEntryLoading());
     print(tipEntryModel.toJson());
     try {
