@@ -6,6 +6,7 @@ import 'package:tip_tracker/constants/api_path.dart';
 import 'package:tip_tracker/core/auth/login/cubit/login_model.dart';
 import 'package:tip_tracker/core/auth/onboarding/cubit/onboarding_model.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_model.dart';
+import 'package:tip_tracker/modules/index/pages/tipentry/cubit/tip_model.dart';
 import 'package:tip_tracker/utils/services/secure_storage_service.dart';
 
 /// This service sets up the get, post methods and backend endpoints. All of
@@ -98,5 +99,9 @@ class RestApiService {
   /// Returns the response.
   static Future<Response> verifyToken() async {
     return await _get("$apiPath/verify_token");
+  }
+
+  static Future<Response> addTip(TipEntryModel tipEntryModel) async {
+    return await _post("$apiPath/transaction", tipEntryModel.toJson());
   }
 }
