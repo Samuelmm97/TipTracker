@@ -7,6 +7,7 @@ import 'package:tip_tracker/core/auth/onboarding/cubit/onboarding_cubit.dart';
 import 'package:tip_tracker/core/auth/registration/cubit/registration_cubit.dart';
 import 'package:tip_tracker/modules/cubit/geolocator_cubit.dart';
 import 'package:tip_tracker/modules/index/pages/map/cubit/map_cubit.dart';
+import 'package:tip_tracker/modules/index/pages/tipentry/cubit/tip_cubit.dart';
 
 void main() {
   runApp(
@@ -26,6 +27,9 @@ void main() {
         ),
         Provider<MapCubit>(
           create: (context) => MapCubit(),
+        ),
+        Provider<TipEntryCubit>(
+          create: (context) => TipEntryCubit(),
         )
       ],
       child: const MyApp(),
